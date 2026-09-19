@@ -1,0 +1,9 @@
+
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // ข้อมูลระบบหลักอ่าน/เขียนผ่าน Next.js server APIs เท่านั้น
+    // Firebase Admin SDK บนเซิร์ฟเวอร์ไม่ถูกจำกัดด้วย rules นี้
+    match /{document=**} { allow read, write: if false; }
+  }
+}
