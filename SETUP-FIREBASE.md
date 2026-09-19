@@ -1,55 +1,68 @@
-# ตั้งค่าระบบหลัง Deploy v3
+# Firebase Setup — Banhaed School System v2.0
 
-## 1) Staff Login
-เว็บใช้ Firebase Authentication Email/Password จริงแล้ว
+Firebase project ที่ใช้: `banhaed-school-system-43dc6`
 
-เพื่อให้ครูใช้ Username เช่น `somchai`:
-- สร้างผู้ใช้ใน Firebase Authentication เป็นอีเมล `somchai@banhaed.local`
-- ผู้ใช้กรอกเพียง `somchai` ในหน้า Login
-- เว็บจะแปลงเป็น `somchai@banhaed.local` ให้อัตโนมัติ
+## 1. Firebase Authentication
+เปิด `Email/Password` สำหรับบัญชีครู/บุคลากร
 
-จากนั้นสร้าง Firestore document:
-`users/{Firebase UID}`
+Admin UI จะสร้างบัญชีครูเป็นอีเมลภายในรูปแบบ:
+`username@banhaed.local`
 
-ตัวอย่าง:
-{
-  "displayName": "ชื่อครู",
-  "roles": ["teacher", "admin"],
-  "status": "active"
-}
+ผู้ใช้กรอกเฉพาะ Username เช่น `somchai` ในหน้าเว็บ ระบบจะแปลงให้อัตโนมัติ
 
-## 2) Student Login (server-side)
-ต้องตั้ง Vercel Environment Variables เพิ่ม:
-- FIREBASE_PROJECT_ID = banhaed-school-system-43dc6
-- FIREBASE_CLIENT_EMAIL = จาก Firebase Service Account
-- FIREBASE_PRIVATE_KEY = จาก Firebase Service Account
-- STUDENT_SESSION_SECRET = สุ่มอย่างน้อย 32 ตัวอักษร
+## 2. Firebase Admin สำหรับ Server API
+สร้าง Service Account จาก Firebase Console > Project Settings > Service Accounts
 
-ห้ามส่ง FIREBASE_PRIVATE_KEY มาในแชต และห้าม Commit ลง GitHub
+นำเฉพาะค่าต่อไปนี้ใส่ Vercel Environment Variables:
+- `FIREBASE_PROJECT_ID=banhaed-school-system-43dc6`
+- `FIREBASE_CLIENT_EMAIL`
+- `FIREBASE_PRIVATE_KEY`
 
-## 3) Student collection ขั้นต่ำ
-Document ID = รหัสนักเรียน
+**อย่าอัปโหลด Service Account JSON ขึ้น GitHub และอย่าส่ง private key ในแชต**
 
-students/{studentId}
+## 3. Student session
+ตั้ง `STUDENT_SESSION_SECRET` เป็นข้อความสุ่มยาวอย่างน้อย 32 ตัวอักษร
+
+Student login ทำงานฝั่ง Server และเก็บ session ใน HttpOnly cookie
+
+## 4. Firestore Rules
+นำ `firestore.rules` ไป Publish ที่ Firestore Database > Rules
+
+Rules ในโปรเจกต์นี้ตั้ง `allow read, write: if false` สำหรับ Browser SDK เพราะข้อมูลหลักอ่าน/เขียนผ่าน Firebase Admin บน Next.js Server APIs
+
+## 5. โครงข้อมูลนักเรียนขั้นต่ำ
+แนะนำให้นำเข้าผ่าน Admin > นำเข้า Excel แทนการสร้างด้วยมือ
+
+Document: `students/{studentId}`
+
+```json
 {
   "prefix": "ด.ช.",
   "firstName": "ชื่อ",
   "lastName": "นามสกุล",
-  "grade": "1",
-  "room": "1",
-  "number": 1,
-  "profileStatus": "not_started"
+  "status": "active",
+  "currentEnrollment": {
+    "academicYear": "2569",
+    "grade": "1",
+    "room": "1",
+    "number": 1
+  },
+  "profileStatus": "not_started",
+  "profileCompletion": 0
 }
+```
 
-## 4) Firestore Rules
-คัดลอกไฟล์ `firestore.rules` ไปวางใน Firebase Console > Firestore Database > Rules แล้ว Publish
+## 6. Staff role document
+หลังสร้างผู้ใช้ Firebase Auth ระบบเก็บสิทธิ์ไว้ที่ `users/{uid}`
 
-## 5) สิ่งที่ทำงานใน v3
-- Landing page มืออาชีพ
-- Staff login ด้วย Firebase Authentication จริง
-- Role-based dashboard จาก users/{uid}
-- Student first login: รหัสนักเรียน → ยืนยันชื่อ/ชั้น/ห้อง → ตั้งวันเกิด 8 หลัก
-- Student login ครั้งถัดไปด้วยรหัสนักเรียน + วันเกิด
-- Student session เป็น HttpOnly cookie
-- Student dashboard shell
-- Firestore starter rules
+```json
+{
+  "username": "somchai",
+  "displayName": "นายสมชาย ใจดี",
+  "roles": ["teacher"],
+  "homerooms": [
+    { "academicYear": "2569", "grade": "3", "room": "1" }
+  ],
+  "status": "active"
+}
+```

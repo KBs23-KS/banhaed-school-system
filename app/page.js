@@ -1,7 +1,141 @@
 "use client";
-import Image from "next/image"; import { useEffect,useState } from "react"; import { signInWithEmailAndPassword } from "firebase/auth"; import { auth } from "@/lib/firebase";
-function Icon({type}){return <span className="portal-icon">{type==="student"?"🎓":"👨‍🏫"}</span>}
-function StaffLogin({back}){const[u,setU]=useState(""),[p,setP]=useState(""),[e,setE]=useState(""),[busy,setBusy]=useState(false);async function go(ev){ev.preventDefault();setBusy(true);setE("");try{await signInWithEmailAndPassword(auth,u.includes("@")?u:`${u.toLowerCase()}@banhaed.local`,p);location.href="/staff";}catch{setE("ชื่อผู้ใช้หรือรหัสผ่านไม่ถูกต้อง");setBusy(false)}}return <LoginFrame title="เข้าสู่ระบบครูและบุคลากร" back={back}><form onSubmit={go}><label>ชื่อผู้ใช้<input value={u} onChange={x=>setU(x.target.value)} placeholder="Username"/></label><label>รหัสผ่าน<input type="password" value={p} onChange={x=>setP(x.target.value)} placeholder="Password"/></label>{e&&<div className="form-error">{e}</div>}<button className="primary-btn">{busy?"กำลังเข้าสู่ระบบ...":"เข้าสู่ระบบ"}</button><p className="login-help">ลืมรหัสผ่านให้ติดต่อผู้ดูแลระบบ</p></form></LoginFrame>}
-function StudentLogin({back}){const[id,setId]=useState(""),[s,setS]=useState(null),[step,setStep]=useState("lookup"),[dob,setDob]=useState(""),[e,setE]=useState(""),[busy,setBusy]=useState(false);async function lookup(ev){ev.preventDefault();setBusy(true);setE("");try{const r=await fetch("/api/student/lookup",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({studentId:id})}),d=await r.json();if(!r.ok)throw Error(d.error);setS(d.student);setStep(d.student.activated?"login":"confirm");}catch(x){setE(x.message)}finally{setBusy(false)}}async function authStudent(ev){ev.preventDefault();setBusy(true);setE("");try{const r=await fetch(step==="activate"?"/api/student/activate":"/api/student/login",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({studentId:id,dob})}),d=await r.json();if(!r.ok)throw Error(d.error);location.href="/student";}catch(x){setE(x.message);setBusy(false)}}return <LoginFrame title="เข้าสู่ระบบนักเรียน" back={back}>{step==="lookup"&&<form onSubmit={lookup}><label>รหัสนักเรียน<input value={id} onChange={x=>setId(x.target.value)} placeholder="กรอกรหัสนักเรียน"/></label>{e&&<div className="form-error">{e}</div>}<button className="primary-btn">{busy?"กำลังตรวจสอบ...":"ตรวจสอบรหัสนักเรียน"}</button><p className="login-help">ครั้งแรกใช้รหัสนักเรียนอย่างเดียว ระบบจะแสดงข้อมูลให้ยืนยัน</p></form>}{step==="confirm"&&<div className="confirm-card"><small>ตรวจสอบว่าเป็นข้อมูลของคุณ</small><h3>{s?.prefix}{s?.firstName} {s?.lastName}</h3><p>ชั้น ม.{s?.grade}/{s?.room} · เลขที่ {s?.number||"-"}</p><button className="primary-btn" onClick={()=>setStep("activate")}>นี่คือข้อมูลของฉัน</button><button className="link-btn" onClick={()=>setStep("lookup")}>ไม่ใช่ข้อมูลของฉัน</button></div>}{(step==="activate"||step==="login")&&<form onSubmit={authStudent}><div className="selected-name"><b>{s?.prefix}{s?.firstName} {s?.lastName}</b><span>รหัส {id}</span></div><label>วันเดือนปีเกิด 8 หลัก<input inputMode="numeric" value={dob} onChange={x=>setDob(x.target.value.replace(/\D/g,"").slice(0,8))} placeholder="เช่น 05012553"/></label>{e&&<div className="form-error">{e}</div>}<button className="primary-btn">{busy?"กำลังดำเนินการ...":step==="activate"?"บันทึกและเปิดใช้งาน":"เข้าสู่ระบบ"}</button><button type="button" className="link-btn" onClick={()=>setStep("lookup")}>เปลี่ยนรหัสนักเรียน</button></form>}</LoginFrame>}
-function LoginFrame({title,back,children}){return <main className="login-page"><div className="login-pro"><section><button className="back-btn" onClick={back}>← กลับหน้าหลัก</button><div className="login-logo"><Image src="/school-logo.png" width={92} height={92} alt="ตราโรงเรียน"/><div><small>BANHAEDSUKSA SCHOOL</small><h1>โรงเรียนบ้านแฮดศึกษา</h1></div></div><div className="login-message"><span>SECURE SCHOOL PORTAL</span><h2>{title}</h2><p>ระบบข้อมูลนักเรียนและบุคลากรที่ควบคุมสิทธิ์การเข้าถึงตามบทบาทผู้ใช้งาน</p></div></section><aside><div className="login-form-head"><small>เข้าสู่ระบบ</small><h2>{title}</h2></div>{children}</aside></div></main>}
-export default function Home(){const[v,setV]=useState("home");useEffect(()=>{const x=new URLSearchParams(location.search).get("login");if(["student","staff"].includes(x))setV(x)},[]);if(v==="student")return <StudentLogin back={()=>setV("home")}/>;if(v==="staff")return <StaffLogin back={()=>setV("home")}/>;return <main className="portal-pro"><header><div className="brand-mini"><Image src="/school-logo.png" width={48} height={48} alt="ตราโรงเรียน"/><div><b>โรงเรียนบ้านแฮดศึกษา</b><small>BANHAEDSUKSA SCHOOL</small></div></div><span className="online-dot">● ระบบออนไลน์</span></header><section className="portal-hero"><div className="hero-left"><div className="school-lockup"><Image src="/school-logo.png" width={118} height={118} alt="ตราโรงเรียน"/><div><small>BANHAEDSUKSA SCHOOL</small><h1>โรงเรียนบ้านแฮดศึกษา</h1><p>เรียนดี กีฬาเยี่ยม เปี่ยมคุณธรรม นำชุมชนพัฒนา</p></div></div><span className="system-label">SCHOOL INFORMATION SYSTEM</span><h2>ศูนย์กลางข้อมูลโรงเรียน<br/><em>ครบ จัดการง่าย และปลอดภัย</em></h2><p className="hero-desc">รวมข้อมูลนักเรียน ห้องเรียน ครูและบุคลากร งานบุคคล ปีการศึกษา เอกสาร และการส่งออกข้อมูลไว้ในระบบเดียว รองรับทั้งมือถือ แท็บเล็ต และคอมพิวเตอร์</p><div className="trust-chips"><span>✓ ควบคุมสิทธิ์ตามบทบาท</span><span>✓ Firebase</span><span>✓ Google Drive</span><span>✓ Excel</span></div></div><div className="entry-box"><div className="entry-title"><small>SECURE ACCESS</small><h3>เลือกประเภทผู้ใช้งาน</h3></div><button className="portal-entry student" onClick={()=>setV("student")}><Icon type="student"/><span><small>STUDENT</small><b>นักเรียน</b><em>กรอกและแก้ไขข้อมูลส่วนตัว</em></span><strong>→</strong></button><button className="portal-entry staff" onClick={()=>setV("staff")}><Icon type="staff"/><span><small>STAFF</small><b>ครูและบุคลากร</b><em>ข้อมูลนักเรียน • บุคลากร • งานบุคคล</em></span><strong>→</strong></button><div className="entry-footer">ข้อมูลส่วนบุคคลจะแสดงตามสิทธิ์ของบัญชีเท่านั้น</div></div></section><section className="cap-grid">{[["01","นักเรียน","ข้อมูลส่วนตัว ที่อยู่ ครอบครัว ฉุกเฉิน ความสามารถ และเป้าหมาย"],["02","ห้องของฉัน","ติดตามความครบถ้วน ค้นหา แก้ไข และส่งออกข้อมูลประจำชั้น"],["03","บุคลากร","ประวัติ ตำแหน่ง วิทยฐานะ ใบอนุญาต เครื่องราชฯ และการอบรม"],["04","ผู้ดูแลระบบ","บัญชี ห้องเรียน Excel ปีการศึกษา เอกสาร และ Audit Log"]].map(x=><article key={x[0]}><span>{x[0]}</span><b>{x[1]}</b><p>{x[2]}</p></article>)}</section></main>}
+import { useEffect, useMemo, useState } from "react";
+import { signInWithEmailAndPassword } from "firebase/auth";
+import { auth } from "@/lib/firebase";
+import UiIcon from "@/components/UiIcon";
+
+function SchoolBrand({compact=false}){
+  return <div className={`landing-brand ${compact?"compact":""}`}>
+    <img src="/school-logo.png" alt="ตราโรงเรียนบ้านแฮดศึกษา"/>
+    <div><b>โรงเรียนบ้านแฮดศึกษา</b><span>“เรียนดี กีฬาเยี่ยม เปี่ยมคุณธรรม นำชุมชนพัฒนา”</span></div>
+  </div>;
+}
+
+function LoginFrame({type,onBack,children}){
+  const student=type==="student";
+  return <main className={`login-scene ${student?"student-login":"staff-login"}`}>
+    <div className="login-scene-bg"/>
+    <div className="login-page-wrap">
+      <button className="back-home" onClick={onBack}><UiIcon name="back" size={18}/>กลับหน้าแรก</button>
+      <SchoolBrand compact/>
+      <section className="login-window">
+        <div className={`login-art ${student?"student":"staff"}`}>
+          <div className="login-art-image"/>
+          <div className="login-art-copy">
+            <div className="login-role-icon"><UiIcon name={student?"room":"students"} size={31}/></div>
+            <h1>{student?"ระบบข้อมูลนักเรียน":"ระบบสำหรับครูและบุคลากร"}</h1>
+            <p>{student?"อัปเดตข้อมูลส่วนตัวของคุณให้ครบถ้วนและเป็นปัจจุบัน":"เข้าถึงข้อมูลนักเรียน บุคลากร และงานบริหารตามสิทธิ์ที่ได้รับ"}</p>
+          </div>
+          <div className="hand-note">{student?"“ทุกวันคือโอกาสสร้างอนาคตที่ยิ่งใหญ่”":"“ครูคือพลังสำคัญของการเปลี่ยนแปลง”"}</div>
+        </div>
+        <div className="login-form-panel">{children}</div>
+      </section>
+      <div className="login-values"><span>◉ เรียนดี</span><span>♥ กีฬาเยี่ยม</span><span>◆ เปี่ยมคุณธรรม</span><span>✦ นำชุมชนพัฒนา</span></div>
+    </div>
+  </main>;
+}
+
+function StudentLogin({onBack}){
+  const [studentId,setStudentId]=useState("");
+  const [dob,setDob]=useState("");
+  const [student,setStudent]=useState(null);
+  const [step,setStep]=useState("lookup");
+  const [loading,setLoading]=useState(false);
+  const [error,setError]=useState("");
+
+  async function lookup(e){
+    e.preventDefault(); setLoading(true); setError("");
+    try{
+      const r=await fetch("/api/student/lookup",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({studentId})});
+      const d=await r.json(); if(!r.ok) throw new Error(d.error);
+      setStudent(d.student); setStep(d.student.activated?"login":"confirm");
+    }catch(e){setError(e.message||"ไม่สามารถตรวจสอบรหัสนักเรียนได้");} finally{setLoading(false);}
+  }
+  async function authenticate(e){
+    e.preventDefault(); setLoading(true); setError("");
+    try{
+      const endpoint=step==="activate"?"/api/student/activate":"/api/student/login";
+      const r=await fetch(endpoint,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({studentId,dob})});
+      const d=await r.json(); if(!r.ok) throw new Error(d.error);
+      location.href="/student";
+    }catch(e){setError(e.message||"เข้าสู่ระบบไม่สำเร็จ");setLoading(false);}
+  }
+  return <LoginFrame type="student" onBack={onBack}>
+    <div className="login-form-head"><small>STUDENT PORTAL</small><h2>{step==="lookup"?"เข้าสู่ระบบนักเรียน":step==="confirm"?"ยืนยันข้อมูลของฉัน":"กรอกวันเดือนปีเกิด"}</h2><p>{step==="lookup"?"ครั้งแรกใช้เพียงรหัสนักเรียน ระบบจะแสดงข้อมูลให้ยืนยัน":"ข้อมูลของคุณจะถูกจัดเก็บอย่างปลอดภัย"}</p></div>
+    {step==="lookup"&&<form className="pretty-form" onSubmit={lookup}>
+      <label>รหัสนักเรียน<div className="input-with-icon"><UiIcon name="person" size={18}/><input value={studentId} onChange={e=>setStudentId(e.target.value)} placeholder="เช่น 06368" autoFocus/></div></label>
+      {error&&<div className="form-error">{error}</div>}
+      <button className="big-login blue" disabled={loading}>{loading?"กำลังตรวจสอบ...":"ตรวจสอบรหัสนักเรียน"}<UiIcon name="arrow"/></button>
+      <div className="login-helper"><UiIcon name="shield" size={18}/><span><b>เข้าใช้งานครั้งแรก</b><small>ระบบจะให้คุณยืนยันชื่อ ชั้น ห้อง และเลขที่ก่อนตั้งวันเกิด 8 หลัก</small></span></div>
+    </form>}
+    {step==="confirm"&&student&&<div className="confirm-card">
+      <div className="confirm-avatar">{student.firstName?.[0]||"น"}</div>
+      <small>ตรวจสอบว่าเป็นข้อมูลของคุณ</small>
+      <h3>{student.prefix}{student.firstName} {student.lastName}</h3>
+      <p>ชั้น ม.{student.grade}/{student.room} · เลขที่ {student.number||"-"}</p>
+      <button className="big-login blue" onClick={()=>setStep("activate")}>นี่คือข้อมูลของฉัน<UiIcon name="check"/></button>
+      <button className="text-button" onClick={()=>{setStep("lookup");setStudent(null)}}>ไม่ใช่ข้อมูลของฉัน</button>
+    </div>}
+    {(step==="login"||step==="activate")&&<form className="pretty-form" onSubmit={authenticate}>
+      <div className="selected-user"><div className="selected-avatar">{student?.firstName?.[0]||"น"}</div><div><b>{student?.prefix}{student?.firstName} {student?.lastName}</b><span>รหัสนักเรียน {studentId}</span></div></div>
+      <label>วันเดือนปีเกิด 8 หลัก<div className="input-with-icon"><UiIcon name="calendar" size={18}/><input value={dob} onChange={e=>setDob(e.target.value.replace(/\D/g,"").slice(0,8))} inputMode="numeric" placeholder="เช่น 05012553" autoFocus/></div></label>
+      {step==="activate"&&<div className="login-helper"><UiIcon name="shield" size={18}/><span><b>เปิดใช้งานครั้งแรก</b><small>วันเดือนปีเกิดจะใช้เป็นรหัสผ่านสำหรับการเข้าสู่ระบบครั้งถัดไป</small></span></div>}
+      {error&&<div className="form-error">{error}</div>}
+      <button className="big-login blue" disabled={loading}>{loading?"กำลังดำเนินการ...":step==="activate"?"บันทึกและเริ่มใช้งาน":"เข้าสู่ระบบ"}<UiIcon name="arrow"/></button>
+      <button type="button" className="text-button" onClick={()=>{setStep("lookup");setStudent(null);setDob("")}}>เปลี่ยนรหัสนักเรียน</button>
+    </form>}
+  </LoginFrame>;
+}
+
+function StaffLogin({onBack}){
+  const [username,setUsername]=useState("");
+  const [password,setPassword]=useState("");
+  const [show,setShow]=useState(false);
+  const [loading,setLoading]=useState(false);
+  const [error,setError]=useState("");
+  async function submit(e){
+    e.preventDefault();setLoading(true);setError("");
+    try{
+      const email=username.includes("@")?username.trim():`${username.trim().toLowerCase()}@banhaed.local`;
+      await signInWithEmailAndPassword(auth,email,password); location.href="/staff";
+    }catch{setError("ชื่อผู้ใช้หรือรหัสผ่านไม่ถูกต้อง");setLoading(false);}
+  }
+  return <LoginFrame type="staff" onBack={onBack}>
+    <div className="login-form-head"><small>STAFF PORTAL</small><h2>เข้าสู่ระบบครูและบุคลากร</h2><p>ใช้บัญชีที่ผู้ดูแลระบบโรงเรียนกำหนดให้</p></div>
+    <form className="pretty-form" onSubmit={submit}>
+      <label>ชื่อผู้ใช้<div className="input-with-icon"><UiIcon name="person" size={18}/><input value={username} onChange={e=>setUsername(e.target.value)} placeholder="เช่น somchai" autoComplete="username"/></div></label>
+      <label>รหัสผ่าน<div className="input-with-icon"><UiIcon name="shield" size={18}/><input value={password} onChange={e=>setPassword(e.target.value)} type={show?"text":"password"} placeholder="กรอกรหัสผ่าน" autoComplete="current-password"/><button type="button" className="peek-btn" onClick={()=>setShow(v=>!v)}><UiIcon name="eye" size={18}/></button></div></label>
+      {error&&<div className="form-error">{error}</div>}
+      <button className="big-login green" disabled={loading}>{loading?"กำลังเข้าสู่ระบบ...":"เข้าสู่ระบบ"}<UiIcon name="arrow"/></button>
+      <div className="login-helper"><UiIcon name="shield" size={18}/><span><b>ลืมรหัสผ่าน?</b><small>ติดต่อผู้ดูแลระบบเพื่อรีเซ็ตรหัสผ่านของคุณ</small></span></div>
+    </form>
+  </LoginFrame>;
+}
+
+export default function Home(){
+  const [view,setView]=useState("home");
+  const year=useMemo(()=>2569,[]);
+  useEffect(()=>{const q=new URLSearchParams(location.search).get("login");if(q==="student"||q==="staff")setView(q)},[]);
+  if(view==="student")return <StudentLogin onBack={()=>setView("home")}/>;
+  if(view==="staff")return <StaffLogin onBack={()=>setView("home")}/>;
+
+  return <main className="landing-page">
+    <div className="landing-photo"/><div className="landing-wash"/>
+    <header className="landing-header"><SchoolBrand/><div className="landing-note">เด็กๆ วันนี้ เพื่ออนาคตที่ยิ่งใหญ่ <span>🌿</span></div></header>
+    <section className="landing-hero">
+      <div className="welcome-copy"><span>ระบบข้อมูลโรงเรียนบ้านแฮดศึกษา</span><h1>ยินดีต้อนรับ</h1><h2>เข้าสู่ระบบข้อมูลนักเรียนและบุคลากร</h2><p>โรงเรียนบ้านแฮดศึกษา</p><small>“เรียนดี กีฬาเยี่ยม เปี่ยมคุณธรรม นำชุมชนพัฒนา”</small></div>
+      <div className="portal-cards">
+        <article className="portal-card student-card">
+          <div className="role-art student"/>
+          <div className="portal-card-body"><div className="role-title"><span><UiIcon name="room" size={32}/></span><h3>นักเรียน</h3></div><p>กรอกและแก้ไขข้อมูลส่วนตัว<br/>ตรวจสอบข้อมูลของตนเองได้ตลอดเวลา</p><button onClick={()=>setView("student")}>เข้าสู่ระบบนักเรียน<UiIcon name="arrow"/></button></div>
+        </article>
+        <article className="portal-card staff-card">
+          <div className="role-art staff"/>
+          <div className="portal-card-body"><div className="role-title"><span><UiIcon name="students" size={32}/></span><h3>ครูและบุคลากร</h3></div><p>จัดการข้อมูลนักเรียน ข้อมูลบุคลากร<br/>และงานบุคคลตามสิทธิ์</p><button onClick={()=>setView("staff")}>เข้าสู่ระบบครู<UiIcon name="arrow"/></button></div>
+        </article>
+      </div>
+    </section>
+    <section className="landing-values"><div><UiIcon name="book"/><span><b>ส่งเสริมการเรียนรู้</b><small>พัฒนาศักยภาพนักเรียนให้ก้าวไกล</small></span></div><div><UiIcon name="heart"/><span><b>พัฒนาบุคลากร</b><small>ยกระดับคุณภาพการศึกษาอย่างต่อเนื่อง</small></span></div><div><UiIcon name="users"/><span><b>โรงเรียนและชุมชน</b><small>สร้างความร่วมมือเพื่อสังคมที่เข้มแข็ง</small></span></div><div><UiIcon name="chart"/><span><b>ก้าวสู่อนาคต</b><small>ใช้ข้อมูลอย่างเป็นระบบและยั่งยืน</small></span></div></section>
+    <footer className="landing-footer"><b>โรงเรียนบ้านแฮดศึกษา</b><span>ปีการศึกษา {year}</span></footer>
+  </main>;
+}

@@ -1,3 +1,30 @@
+import { NextResponse } from "next/server";
+import { cookies } from "next/headers";
+import { requireStaff } from "@/lib/staffAuth";
+import { getAdminDb } from "@/lib/firebaseAdmin";
+import { uploadBuffer,driveReady } from "@/lib/drive";
+import { COOKIE_NAME,readStudentSession } from "@/lib/studentAuth";
 
-import { NextResponse } from "next/server"; import { cookies } from "next/headers"; import { requireStaff } from "@/lib/staffAuth"; import { getAdminDb } from "@/lib/firebaseAdmin"; import { uploadBuffer,driveReady } from "@/lib/drive"; import { COOKIE_NAME,readStudentSession } from "@/lib/studentAuth";
-export async function POST(request){try{if(!driveReady())return NextResponse.json({error:"ยังไม่ได้ตั้งค่า Google Drive"},{status:503});let ownerType="",ownerId="",actor="";const auth=request.headers.get("authorization")||"";if(auth.startsWith("Bearer ")){const u=await requireStaff(request,["teacher","hr","admin"]);ownerType="staff_upload";ownerId=u.uid;actor=u.uid;}else{const c=await cookies(),s=readStudentSession(c.get(COOKIE_NAME)?.value);if(!s)return NextResponse.json({error:"unauthorized"},{status:401});ownerType="student";ownerId=s.studentId;actor=s.studentId;}const form=await request.formData(),file=form.get("file"),kind=String(form.get("kind")||"document");if(!file||typeof file.arrayBuffer!=="function")return NextResponse.json({error:"ไม่พบไฟล์"},{status:400});if(file.size>8*1024*1024)return NextResponse.json({error:"ไฟล์ต้องไม่เกิน 8 MB"},{status:400});const buffer=Buffer.from(await file.arrayBuffer()),safe=String(file.name||"file").replace(/[^a-zA-Z0-9ก-๙._-]/g,"_");const uploaded=await uploadBuffer({buffer,name:`${ownerId}_${Date.now()}_${safe}`,mimeType:file.type||"application/octet-stream"});const ref=await getAdminDb().collection("documents").add({ownerType,ownerId,kind,driveFileId:uploaded.id,name:uploaded.name,mimeType:uploaded.mimeType,size:Number(uploaded.size||file.size),webViewLink:uploaded.webViewLink||"",uploadedBy:actor,createdAt:new Date().toISOString()});return NextResponse.json({ok:true,document:{id:ref.id,...uploaded}});}catch(e){console.error(e);return NextResponse.json({error:"อัปโหลดไฟล์ไม่สำเร็จ"},{status:500});}}
+export async function POST(request){
+ try{
+  if(!driveReady())return NextResponse.json({error:"ยังไม่ได้ตั้งค่า Google Drive"},{status:503});
+  let ownerType="",ownerId="",actor="",staff=null;
+  const auth=request.headers.get("authorization")||"";
+  const form=await request.formData(),file=form.get("file"),kind=String(form.get("kind")||"document"),requestedOwner=String(form.get("ownerId")||"");
+  if(auth.startsWith("Bearer ")){
+    staff=await requireStaff(request,["teacher","hr","admin"]);actor=staff.uid;
+    if(requestedOwner && (staff.roles||[]).some(r=>["hr","admin"].includes(r))){ownerType=kind.startsWith("personnel")?"personnel":"student";ownerId=requestedOwner;}
+    else{ownerType="staff_upload";ownerId=staff.uid;}
+  }else{
+    const c=await cookies(),s=readStudentSession(c.get(COOKIE_NAME)?.value);if(!s)return NextResponse.json({error:"unauthorized"},{status:401});ownerType="student";ownerId=s.studentId;actor=s.studentId;
+  }
+  if(!file||typeof file.arrayBuffer!=="function")return NextResponse.json({error:"ไม่พบไฟล์"},{status:400});
+  if(file.size>8*1024*1024)return NextResponse.json({error:"ไฟล์ต้องไม่เกิน 8 MB"},{status:400});
+  const buffer=Buffer.from(await file.arrayBuffer()),safe=String(file.name||"file").replace(/[^a-zA-Z0-9ก-๙._-]/g,"_");
+  const uploaded=await uploadBuffer({buffer,name:`${ownerId}_${Date.now()}_${safe}`,mimeType:file.type||"application/octet-stream"});
+  const ref=await getAdminDb().collection("documents").add({ownerType,ownerId,kind,driveFileId:uploaded.id,name:uploaded.name,mimeType:uploaded.mimeType,size:Number(uploaded.size||file.size),webViewLink:uploaded.webViewLink||"",uploadedBy:actor,createdAt:new Date().toISOString()});
+  if(kind==="student_photo"&&ownerType==="student")await getAdminDb().collection("students").doc(ownerId).set({photoDocumentId:ref.id,updatedAt:new Date().toISOString()},{merge:true});
+  if(kind==="personnel_photo"&&ownerType==="personnel")await getAdminDb().collection("personnel").doc(ownerId).set({photoDocumentId:ref.id,updatedAt:new Date().toISOString()},{merge:true});
+  return NextResponse.json({ok:true,document:{id:ref.id,...uploaded}});
+ }catch(e){console.error(e);return NextResponse.json({error:"อัปโหลดไฟล์ไม่สำเร็จ"},{status:500});}
+}

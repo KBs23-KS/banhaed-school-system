@@ -1,1 +1,57 @@
-"use client";import {useEffect,useState} from "react";import StaffShell from "@/components/StaffShell";import {staffFetch} from "@/lib/apiClient";export default function Page(){const[d,setD]=useState(null);useEffect(()=>{const t=setInterval(()=>{if(!d)staffFetch("/api/dashboard").then(setD).catch(()=>{})},300);return()=>clearInterval(t)},[d]);return <StaffShell><div className="page-head"><div><small>DASHBOARD</small><h1>ภาพรวมระบบ</h1><p>ปีการศึกษา {d?.currentAcademicYear||"—"}</p></div></div><section className="stat-grid">{[["นักเรียนทั้งหมด",d?.counts.students,"ข้อมูลนักเรียนที่มีสถานะปัจจุบัน"],["ห้องของฉัน",d?.counts.myRoom,"นักเรียนในห้องที่เป็นครูที่ปรึกษา"],["ข้อมูลไม่ครบ",d?.counts.incomplete,"นักเรียนที่ยังกรอกข้อมูลไม่ครบ"],["บุคลากร",d?.counts.personnel,"บุคลากรที่มีสถานะปฏิบัติงาน"]].map(x=><article key={x[0]}><span>{x[0]}</span><b>{x[1]??"—"}</b><small>{x[2]}</small></article>)}</section><section className="panel-card"><div className="panel-title"><div><small>SYSTEM STATUS</small><h2>ระบบหลักพร้อมใช้งาน</h2></div><span className="ok-pill">● Connected</span></div><div className="status-list"><div><b>Firebase Authentication</b><span>บัญชีครู/บุคลากร</span></div><div><b>Cloud Firestore</b><span>ข้อมูลนักเรียนและบุคลากร</span></div><div><b>Google Drive</b><span>พร้อมเมื่อกำหนดโฟลเดอร์และเปิด Drive API</span></div><div><b>Excel Import / Export</b><span>นำเข้าและส่งออกข้อมูลนักเรียน</span></div></div></section></StaffShell>}
+"use client";
+import { useEffect, useState } from "react";
+import StaffShell from "@/components/StaffShell";
+import { staffFetch } from "@/lib/apiClient";
+import UiIcon from "@/components/UiIcon";
+
+export default function StaffDashboard(){
+  const [d,setD]=useState(null);
+  useEffect(()=>{staffFetch("/api/dashboard").then(setD).catch(()=>setD({counts:{},currentAcademicYear:"2569"}))},[]);
+  const counts=d?.counts||{};
+  const cards=[
+    ["ห้องเรียนที่ปรึกษา",counts.myRoom??"—","ห้องของฉัน","room","blue"],
+    ["นักเรียนทั้งหมด",counts.students??"—","ข้อมูลนักเรียน","students","green"],
+    ["ข้อมูลไม่ครบ",counts.incomplete??"—","ต้องติดตาม","file","purple"],
+    ["บุคลากร",counts.personnel??"—","ในระบบ","personnel","orange"],
+  ];
+  return <StaffShell title="ภาพรวมระบบ">
+    <section className="staff-hero-banner">
+      <div className="staff-hero-copy"><small>WELCOME BACK</small><h1>สวัสดีครับ/ค่ะ 👋</h1><p>ศูนย์กลางข้อมูลนักเรียน บุคลากร และงานโรงเรียนบ้านแฮดศึกษา</p><span>“การศึกษาที่ดี เริ่มจากข้อมูลที่เป็นระบบ” 🌿</span></div>
+      <div className="staff-hero-art"/>
+    </section>
+
+    <section className="staff-stat-grid">
+      {cards.map(([label,value,sub,icon,color])=><article key={label} className={`staff-stat-card ${color}`}><span className="stat-icon"><UiIcon name={icon} size={24}/></span><div><small>{label}</small><b>{value}</b><em>{sub}</em></div></article>)}
+    </section>
+
+    <section className="dashboard-grid-2">
+      <article className="dashboard-panel quick-panel">
+        <div className="panel-heading"><div><small>QUICK ACCESS</small><h2>เมนูที่ใช้งานบ่อย</h2></div><span>เข้าถึงงานได้เร็วขึ้น</span></div>
+        <div className="quick-grid">
+          <a href="/staff/my-room"><span className="quick-icon blue"><UiIcon name="room"/></span><b>ห้องของฉัน</b><small>จัดการรายชื่อนักเรียน</small></a>
+          <a href="/staff/students"><span className="quick-icon cyan"><UiIcon name="students"/></span><b>ค้นหานักเรียน</b><small>ดูข้อมูลนักเรียนทั้งโรงเรียน</small></a>
+          <a href="/staff/personnel"><span className="quick-icon green"><UiIcon name="personnel"/></span><b>ข้อมูลบุคลากร</b><small>ประวัติและข้อมูลบุคลากร</small></a>
+          <a href="/staff/admin"><span className="quick-icon purple"><UiIcon name="upload"/></span><b>นำเข้า Excel</b><small>เพิ่มข้อมูลแบบกลุ่ม</small></a>
+          <a href="/staff/admin"><span className="quick-icon orange"><UiIcon name="settings"/></span><b>จัดการระบบ</b><small>บัญชี ห้องเรียน ปีการศึกษา</small></a>
+          <a href="/staff/personnel?mode=hr"><span className="quick-icon pink"><UiIcon name="briefcase"/></span><b>งานบุคคล</b><small>ติดตามเอกสารและใบอนุญาต</small></a>
+        </div>
+      </article>
+
+      <article className="dashboard-panel system-panel">
+        <div className="panel-heading"><div><small>SYSTEM STATUS</small><h2>สถานะระบบ</h2></div><span className="connected-pill">● พร้อมใช้งาน</span></div>
+        <div className="system-health">
+          <div><span><UiIcon name="shield"/></span><div><b>Firebase Authentication</b><small>บัญชีครูและบุคลากร</small></div><i>พร้อม</i></div>
+          <div><span><UiIcon name="cloud"/></span><div><b>Cloud Firestore</b><small>ฐานข้อมูลหลักของระบบ</small></div><i>พร้อม</i></div>
+          <div><span><UiIcon name="folder"/></span><div><b>Google Drive</b><small>ไฟล์ รูปภาพ และเอกสาร</small></div><i>ตั้งค่าใน Vercel</i></div>
+          <div><span><UiIcon name="file"/></span><div><b>Excel Import / Export</b><small>รองรับไฟล์ .xlsx</small></div><i>พร้อม</i></div>
+        </div>
+      </article>
+    </section>
+
+    <section className="dashboard-panel activity-panel">
+      <div className="panel-heading"><div><small>WORKFLOW</small><h2>สิ่งที่ควรตรวจสอบวันนี้</h2></div></div>
+      <div className="activity-row"><span className="activity-icon green"><UiIcon name="check"/></span><div><b>ตรวจสอบความครบถ้วนของนักเรียนในห้องที่ปรึกษา</b><small>ดูนักเรียนที่ยังกรอกข้อมูลไม่ครบและติดตามให้เรียบร้อย</small></div><a href="/staff/my-room">เปิดห้องของฉัน →</a></div>
+      <div className="activity-row"><span className="activity-icon blue"><UiIcon name="phone"/></span><div><b>ตรวจสอบผู้ติดต่อกรณีฉุกเฉิน</b><small>เบอร์โทรศัพท์ที่เป็นปัจจุบันช่วยให้โรงเรียนติดต่อได้รวดเร็ว</small></div><a href="/staff/students">ค้นหานักเรียน →</a></div>
+    </section>
+  </StaffShell>
+}
