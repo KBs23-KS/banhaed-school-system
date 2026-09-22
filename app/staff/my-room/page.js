@@ -23,7 +23,7 @@ export default function MyRoomPage(){
   return <StaffShell title="ห้องของฉัน">
     <section className="room-hero">
       <div><small>HOMEROOM</small><h1><UiIcon name="room" size={34}/> ห้องของฉัน</h1><p>{room?`ม.${room.grade}/${room.room} • ปีการศึกษา ${room.academicYear}`:"ห้องที่คุณได้รับมอบหมายเป็นครูที่ปรึกษา"}</p></div>
-      <div className="room-hero-art"><span>🌱</span><b>ดูแลนักเรียนวันนี้<br/>สร้างอนาคตที่ดีกว่าในวันหน้า</b></div>
+      <div className="room-hero-art"><b>ดูแลนักเรียนวันนี้<br/>สร้างอนาคตที่ดีกว่าในวันหน้า</b><small>โรงเรียนบ้านแฮดศึกษา</small></div>
     </section>
 
     {d?.error&&<div className="form-error">{d.error}</div>}
@@ -38,7 +38,7 @@ export default function MyRoomPage(){
       <div className="table-search"><UiIcon name="search" size={18}/><input value={q} onChange={e=>setQ(e.target.value)} placeholder="ค้นหาชื่อ หรือนักเรียน..."/></div>
       <select value={status} onChange={e=>setStatus(e.target.value)}><option value="">สถานะข้อมูลทั้งหมด</option><option value="complete">ครบถ้วน</option><option value="incomplete">ยังไม่ครบ</option><option value="not_started">ยังไม่เริ่ม</option></select>
       <select value={sort} onChange={e=>setSort(e.target.value)}><option value="number">เรียงตามเลขที่</option><option value="name">เรียงตามชื่อ</option></select>
-      <a className="toolbar-btn blue" href="/staff/admin"><UiIcon name="download" size={17}/>ส่งออก Excel</a>
+      <a className="toolbar-btn green" href={room?`/api/admin/export-students?grade=${encodeURIComponent(room.grade)}&room=${encodeURIComponent(room.room)}`:"/api/admin/export-students"}><UiIcon name="download" size={17}/>ส่งออก Excel</a><button className="toolbar-btn soft-print" onClick={()=>window.print()}><UiIcon name="file" size={17}/>พิมพ์รายชื่อ</button>
     </section>
 
     <div className="room-main-grid">
@@ -47,7 +47,7 @@ export default function MyRoomPage(){
         <div className="responsive-table-wrap"><table className="pretty-table"><thead><tr><th>รูป</th><th>รหัสนักเรียน</th><th>ชื่อ-สกุล</th><th>เลขที่</th><th>สถานะข้อมูล</th><th>ผู้ปกครอง</th><th>โทรศัพท์</th><th>การดำเนินการ</th></tr></thead><tbody>{rows.map((s,i)=>{const e=s.currentEnrollment||{};const phone=s.emergency?.primary?.phone||s.family?.guardian?.phone||s.phone||"—";return <tr key={s.studentId}><td data-label="รูป"><div className="table-avatar">{s.photoDocumentId?<SecureImage documentId={s.photoDocumentId} alt="รูปนักเรียน"/>:s.firstName?.[0]}</div></td><td data-label="รหัส">{s.studentId}</td><td data-label="ชื่อ"><b>{s.prefix}{s.firstName} {s.lastName}</b><small>{s.nickname?`(${s.nickname})`:""}</small></td><td data-label="เลขที่">{e.number??i+1}</td><td data-label="สถานะ"><StatusPill status={s.profileStatus}/></td><td data-label="ผู้ปกครอง">{s.family?.guardian?.name||"—"}</td><td data-label="โทรศัพท์">{phone}</td><td data-label="การดำเนินการ"><div className="table-actions"><a href={`/staff/students/${s.studentId}`} title="ดูข้อมูล"><UiIcon name="eye" size={16}/><span>ดูข้อมูล</span></a><a href={`/staff/students/${s.studentId}?edit=1`} title="แก้ไข"><UiIcon name="edit" size={16}/><span>แก้ไข</span></a></div></td></tr>})}</tbody></table></div>
         {!rows.length&&<div className="empty-state"><UiIcon name="students" size={38}/><b>ไม่พบนักเรียนตามเงื่อนไข</b><span>ลองเปลี่ยนคำค้นหาหรือตัวกรอง</span></div>}
       </section>
-      <aside className="room-summary-card"><div className="data-card-head"><div><small>COMPLETION</small><h2>สรุปความครบถ้วน</h2></div></div><Progress label="ข้อมูลครบถ้วน" value={students.length?Math.round(complete/students.length*100):0} color="blue"/><Progress label="ข้อมูลยังไม่ครบ" value={students.length?Math.round(incomplete/students.length*100):0} color="orange"/><Progress label="ผู้ติดต่อฉุกเฉิน" value={students.length?Math.round(emergency/students.length*100):0} color="green"/><div className="room-quote">“ดูแลนักเรียนวันนี้<br/>สร้างอนาคตที่ดีกว่าในวันหน้า” 🌿</div></aside>
+      <aside className="room-summary-card"><div className="data-card-head"><div><small>COMPLETION</small><h2>สรุปความครบถ้วน</h2></div></div><Progress label="ข้อมูลครบถ้วน" value={students.length?Math.round(complete/students.length*100):0} color="blue"/><Progress label="ข้อมูลยังไม่ครบ" value={students.length?Math.round(incomplete/students.length*100):0} color="orange"/><Progress label="ผู้ติดต่อฉุกเฉิน" value={students.length?Math.round(emergency/students.length*100):0} color="green"/><div className="room-quote">ดูแลนักเรียนวันนี้<br/>สร้างอนาคตที่ดีกว่าในวันหน้า</div></aside>
     </div>
   </StaffShell>
 }

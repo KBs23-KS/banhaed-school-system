@@ -1,27 +1,25 @@
-# Banhaed School Information System v2.0
+# Banhaed School System v7 Final
 
-ระบบข้อมูลนักเรียนและบุคลากร **โรงเรียนบ้านแฮดศึกษา**
+ระบบข้อมูลนักเรียนและบุคลากร โรงเรียนบ้านแฮดศึกษา
 
-เวอร์ชันนี้รวมงาน 1–9 ในโค้ดชุดเดียว โดยยึด Design Language จาก mockup ที่อนุมัติ: ฟ้า–ขาว–เขียว, การ์ดมุมโค้ง, ภาพลักษณ์น่ารักแต่ใช้งานจริงแบบมืออาชีพ และ Responsive ทุกหน้าหลัก
+## Design ที่ล็อกในรุ่นนี้
 
-## สิ่งที่รวมในชุดนี้
+หน้าแรกใช้แนว Friendly School Portal ตาม mockup ล่าสุด: ไม่มีตราโรงเรียนบนหน้าแรก, ชื่อ “โรงเรียนบ้านแฮดศึกษา” อยู่กึ่งกลางเหนือ “ยินดีต้อนรับ”, คำขวัญเด่นขึ้น, กล่องเข้าสู่ระบบนักเรียน/ครูสมดุล และเหลือคุณค่าหลัก 3 ข้อ โดยจัดหน้า Desktop ให้พอดีหนึ่ง viewport ไม่ต้องเลื่อน
 
-1. Homepage แบบใหม่ + Student / Staff portal
-2. Student login ครั้งแรก + login ปกติ
-3. Student dashboard + ฟอร์ม 6 หมวด + % ความครบถ้วน + อัปโหลดรูป
-4. Staff dashboard + นักเรียนทั้งโรงเรียน + ห้องของฉัน + โปรไฟล์นักเรียน
-5. Personnel / HR + โครงสร้างข้อมูลบุคลากร 8 หมวด + เอกสาร
-6. Admin + บัญชี + ห้องเรียน + Excel Import + Academic Year Rollover
-7. Firebase Authentication + Firestore Server APIs + Google Drive upload/download proxy
-8. Role permissions: teacher / hr / admin + homeroom assignments
-9. Responsive desktop / tablet / mobile + syntax/static validation
+หลัง Login ใช้ Hybrid Professional: sidebar น้ำเงินเข้ม, topbar ขาว, ตารางและฟอร์มจริงจังขึ้น ลดความเป็นการ์ตูน แต่ยังมีโทนฟ้า/เขียวและภาพประกอบบางจุดให้ระบบดูเป็นมิตร
 
-## Deploy
+## ระบบที่รวมไว้
 
-อ่าน `SETUP-PRODUCTION.md` แล้วตั้ง Environment Variables ใน Vercel ก่อนเปิดใช้ข้อมูลจริง
+- Student first login + Student session
+- Student dashboard / profile 6 หมวด / upload รูปเอง
+- Staff Firebase Authentication
+- Staff dashboard / ห้องของฉัน / นักเรียนทั้งโรงเรียน
+- Personnel / HR / โปรไฟล์ 8 หมวด
+- Admin / Roles / Homeroom / Classrooms
+- Excel Import / Export
+- Academic Year Rollover Preview
+- Google Drive private file storage ผ่าน Server API
+- Firestore ผ่าน Firebase Admin Server API
+- Responsive desktop / tablet / mobile
 
-## สำคัญ
-
-- ห้าม Commit `FIREBASE_PRIVATE_KEY` ลง GitHub
-- Firestore Rules ในชุดนี้ปิดการอ่าน/เขียนจาก browser โดยตรง ข้อมูลหลักวิ่งผ่าน Next.js Server APIs
-- รูปและเอกสาร Google Drive ควรเป็น Private และแชร์เฉพาะ Service Account ที่ระบบใช้
+ดูรายละเอียดหน้าทั้งหมดใน `PAGES.md` และขั้นตอนเปิดใช้จริงใน `SETUP-PRODUCTION.md`

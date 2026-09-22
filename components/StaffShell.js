@@ -6,13 +6,6 @@ import { auth } from "@/lib/firebase";
 import { staffFetch } from "@/lib/apiClient";
 import UiIcon from "@/components/UiIcon";
 
-const baseNav = [
-  ["/staff", "ภาพรวม", "home"],
-  ["/staff/students", "นักเรียนทั้งหมด", "students"],
-  ["/staff/my-room", "ห้องของฉัน", "room"],
-  ["/staff/personnel", "ข้อมูลบุคลากร", "personnel"],
-];
-
 export default function StaffShell({ children, title = "" }) {
   const [profile, setProfile] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -21,18 +14,10 @@ export default function StaffShell({ children, title = "" }) {
 
   useEffect(() => {
     const off = onAuthStateChanged(auth, async (user) => {
-      if (!user) {
-        location.href = "/?login=staff";
-        return;
-      }
-      try {
-        const d = await staffFetch("/api/staff/me");
-        setProfile(d.user);
-      } catch {
-        location.href = "/?login=staff";
-      } finally {
-        setLoading(false);
-      }
+      if (!user) { location.href = "/?login=staff"; return; }
+      try { const d = await staffFetch("/api/staff/me"); setProfile(d.user); }
+      catch { location.href = "/?login=staff"; }
+      finally { setLoading(false); }
     });
     return off;
   }, []);
@@ -40,17 +25,31 @@ export default function StaffShell({ children, title = "" }) {
   if (loading) return <main className="screen-loader"><div className="loader-orb"/><p>กำลังตรวจสอบสิทธิ์ผู้ใช้งาน...</p></main>;
 
   const roles = profile?.roles || [];
-  const nav = [...baseNav];
-  if (roles.includes("hr")) nav.push(["/staff/personnel?mode=hr", "งานบุคคล", "briefcase"]);
-  if (roles.includes("admin")) nav.push(["/staff/admin", "จัดการระบบ", "settings"]);
+  const studentNav = [
+    ["/staff", "หน้าหลัก", "home"],
+    ["/staff/my-room", "ห้องของฉัน", "room"],
+    ["/staff/students", "นักเรียนทั้งโรงเรียน", "students"],
+  ];
+  const personnelNav = [["/staff/personnel", "ข้อมูลบุคลากร", "personnel"]];
+  if (roles.includes("hr")) personnelNav.push(["/staff/personnel?mode=hr", "งานบุคคล", "briefcase"]);
+  const systemNav = roles.includes("admin") ? [["/staff/admin", "จัดการระบบ", "settings"]] : [];
 
   function active(href) {
     const path = href.split("?")[0];
     return path === "/staff" ? pathname === "/staff" : pathname.startsWith(path);
   }
+  function NavGroup({label,items}) {
+    if (!items.length) return null;
+    return <div className="staff-nav-group"><span className="staff-nav-label">{label}</span>{items.map(([href,labelText,icon]) => (
+      <a key={href} href={href} className={active(href) ? "active" : ""} onClick={()=>setOpen(false)}>
+        <span className="nav-icon"><UiIcon name={icon} size={20}/></span><span>{labelText}</span>
+      </a>
+    ))}</div>;
+  }
 
+  const roleLabel = roles.includes("admin") ? "ผู้ดูแลระบบ" : roles.includes("hr") ? "งานบุคคล" : "ครูผู้สอน";
   return (
-    <main className="staff-layout">
+    <main className="staff-layout professional-inner">
       <aside className={`staff-sidebar ${open ? "is-open" : ""}`}>
         <div className="staff-brand">
           <div className="staff-logo-wrap"><img src="/school-logo.png" alt="ตราโรงเรียนบ้านแฮดศึกษา"/></div>
@@ -58,22 +57,19 @@ export default function StaffShell({ children, title = "" }) {
         </div>
 
         <nav className="staff-nav">
-          {nav.map(([href,label,icon]) => (
-            <a key={href} href={href} className={active(href) ? "active" : ""} onClick={()=>setOpen(false)}>
-              <span className="nav-icon"><UiIcon name={icon} size={20}/></span><span>{label}</span>
-            </a>
-          ))}
+          <NavGroup label="ระบบข้อมูลนักเรียน" items={studentNav}/>
+          <NavGroup label="ระบบงานบุคลากร" items={personnelNav}/>
+          <NavGroup label="การตั้งค่า" items={systemNav}/>
         </nav>
 
-        <div className="sidebar-quote">
-          <span>“</span>
-          <p>คนดี มีความรู้<br/>อยู่ร่วมกันอย่างมีความสุข</p>
-          <i>โรงเรียนบ้านแฮดศึกษา</i>
+        <div className="sidebar-school-card">
+          <div className="sidebar-school-image"/>
+          <p>เรียนดี กีฬาเยี่ยม<br/>เปี่ยมคุณธรรม นำชุมชนพัฒนา</p>
         </div>
 
         <div className="staff-user-card">
           <div className="staff-avatar">{(profile?.displayName || profile?.email || "ค").slice(0,1)}</div>
-          <div className="staff-user-text"><small>เข้าสู่ระบบโดย</small><b>{profile?.displayName || profile?.email}</b><span>{roles.join(" • ") || "staff"}</span></div>
+          <div className="staff-user-text"><small>เข้าสู่ระบบโดย</small><b>{profile?.displayName || profile?.email}</b><span>{roleLabel}</span></div>
         </div>
         <button className="sidebar-logout" onClick={()=>signOut(auth).then(()=>location.href="/")}><UiIcon name="logout" size={18}/>ออกจากระบบ</button>
       </aside>
@@ -84,15 +80,15 @@ export default function StaffShell({ children, title = "" }) {
           <div className="staff-topbar-search"><UiIcon name="search" size={18}/><input placeholder="ค้นหานักเรียน บุคลากร หรือเมนู..."/></div>
           <div className="staff-top-actions">
             <span className="year-pill"><UiIcon name="calendar" size={16}/>ปีการศึกษา 2569</span>
-            <button className="icon-btn"><UiIcon name="bell" size={19}/><i>3</i></button>
-            <div className="top-profile"><div className="top-avatar">{(profile?.displayName || "ค").slice(0,1)}</div><div><b>{profile?.displayName || "ผู้ใช้งาน"}</b><span>{roles.includes("admin") ? "ผู้ดูแลระบบ" : roles.includes("hr") ? "งานบุคคล" : "ครูผู้สอน"}</span></div></div>
+            <button className="icon-btn" aria-label="การแจ้งเตือน"><UiIcon name="bell" size={19}/><i>3</i></button>
+            <div className="top-profile"><div className="top-avatar">{(profile?.displayName || "ค").slice(0,1)}</div><div><b>{profile?.displayName || "ผู้ใช้งาน"}</b><span>{roleLabel}</span></div></div>
           </div>
         </header>
 
         <div className="staff-mobile-title"><b>{title || "ระบบข้อมูลโรงเรียน"}</b><span>{profile?.displayName}</span></div>
         <div className="staff-page">{children}</div>
       </section>
-      {open && <button className="sidebar-backdrop" aria-label="ปิดเมนู" onClick={()=>setOpen(false)}/>}
+      {open && <button className="sidebar-backdrop" aria-label="ปิดเมนู" onClick={()=>setOpen(false)}/>} 
     </main>
   );
 }

@@ -1,5 +1,5 @@
 "use client";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useState } from "react";
 import { signInWithEmailAndPassword } from "firebase/auth";
 import { auth } from "@/lib/firebase";
 import UiIcon from "@/components/UiIcon";
@@ -114,28 +114,45 @@ function StaffLogin({onBack}){
 
 export default function Home(){
   const [view,setView]=useState("home");
-  const year=useMemo(()=>2569,[]);
   useEffect(()=>{const q=new URLSearchParams(location.search).get("login");if(q==="student"||q==="staff")setView(q)},[]);
   if(view==="student")return <StudentLogin onBack={()=>setView("home")}/>;
   if(view==="staff")return <StaffLogin onBack={()=>setView("home")}/>;
 
-  return <main className="landing-page">
+  return <main className="landing-page landing-v7">
     <div className="landing-photo"/><div className="landing-wash"/>
-    <header className="landing-header"><SchoolBrand/><div className="landing-note">เด็กๆ วันนี้ เพื่ออนาคตที่ยิ่งใหญ่ <span>🌿</span></div></header>
-    <section className="landing-hero">
-      <div className="welcome-copy"><span>ระบบข้อมูลโรงเรียนบ้านแฮดศึกษา</span><h1>ยินดีต้อนรับ</h1><h2>เข้าสู่ระบบข้อมูลนักเรียนและบุคลากร</h2><p>โรงเรียนบ้านแฮดศึกษา</p><small>“เรียนดี กีฬาเยี่ยม เปี่ยมคุณธรรม นำชุมชนพัฒนา”</small></div>
-      <div className="portal-cards">
+    <header className="landing-header landing-header-v7">
+      <div className="landing-note">เด็กๆ วันนี้ เพื่ออนาคตที่ยิ่งใหญ่ <span>🌿</span></div>
+    </header>
+    <section className="landing-hero landing-hero-v7">
+      <div className="welcome-copy welcome-copy-v7">
+        <div className="landing-school-name">โรงเรียนบ้านแฮดศึกษา</div>
+        <h1>ยินดีต้อนรับ</h1>
+        <h2>เข้าสู่ระบบข้อมูลนักเรียนและบุคลากร</h2>
+        <small>“เรียนดี กีฬาเยี่ยม เปี่ยมคุณธรรม นำชุมชนพัฒนา”</small>
+      </div>
+      <div className="portal-cards portal-cards-v7">
         <article className="portal-card student-card">
           <div className="role-art student"/>
-          <div className="portal-card-body"><div className="role-title"><span><UiIcon name="room" size={32}/></span><h3>นักเรียน</h3></div><p>กรอกและแก้ไขข้อมูลส่วนตัว<br/>ตรวจสอบข้อมูลของตนเองได้ตลอดเวลา</p><button onClick={()=>setView("student")}>เข้าสู่ระบบนักเรียน<UiIcon name="arrow"/></button></div>
+          <div className="portal-card-body">
+            <div className="role-title"><span><UiIcon name="room" size={30}/></span><h3>นักเรียน</h3></div>
+            <p>กรอกและแก้ไขข้อมูลส่วนตัว<br/>ตรวจสอบข้อมูลของตนเองได้ตลอดเวลา</p>
+            <button onClick={()=>setView("student")}>เข้าสู่ระบบนักเรียน<UiIcon name="arrow"/></button>
+          </div>
         </article>
         <article className="portal-card staff-card">
           <div className="role-art staff"/>
-          <div className="portal-card-body"><div className="role-title"><span><UiIcon name="students" size={32}/></span><h3>ครูและบุคลากร</h3></div><p>จัดการข้อมูลนักเรียน ข้อมูลบุคลากร<br/>และงานบุคคลตามสิทธิ์</p><button onClick={()=>setView("staff")}>เข้าสู่ระบบครู<UiIcon name="arrow"/></button></div>
+          <div className="portal-card-body">
+            <div className="role-title"><span><UiIcon name="students" size={30}/></span><h3>ครูและบุคลากร</h3></div>
+            <p>จัดการข้อมูลนักเรียน ข้อมูลบุคลากร<br/>และงานบุคคลตามสิทธิ์</p>
+            <button onClick={()=>setView("staff")}>เข้าสู่ระบบครู<UiIcon name="arrow"/></button>
+          </div>
         </article>
       </div>
     </section>
-    <section className="landing-values"><div><UiIcon name="book"/><span><b>ส่งเสริมการเรียนรู้</b><small>พัฒนาศักยภาพนักเรียนให้ก้าวไกล</small></span></div><div><UiIcon name="heart"/><span><b>พัฒนาบุคลากร</b><small>ยกระดับคุณภาพการศึกษาอย่างต่อเนื่อง</small></span></div><div><UiIcon name="users"/><span><b>โรงเรียนและชุมชน</b><small>สร้างความร่วมมือเพื่อสังคมที่เข้มแข็ง</small></span></div><div><UiIcon name="chart"/><span><b>ก้าวสู่อนาคต</b><small>ใช้ข้อมูลอย่างเป็นระบบและยั่งยืน</small></span></div></section>
-    <footer className="landing-footer"><b>โรงเรียนบ้านแฮดศึกษา</b><span>ปีการศึกษา {year}</span></footer>
+    <section className="landing-values landing-values-v7">
+      <div><UiIcon name="book"/><span><b>ส่งเสริมการเรียนรู้</b><small>พัฒนาศักยภาพนักเรียนให้ก้าวไกล</small></span></div>
+      <div><UiIcon name="heart"/><span><b>พัฒนาบุคลากร</b><small>ยกระดับคุณภาพการศึกษาอย่างต่อเนื่อง</small></span></div>
+      <div><UiIcon name="users"/><span><b>โรงเรียนและชุมชน</b><small>สร้างความร่วมมือเพื่อสังคมที่เข้มแข็ง</small></span></div>
+    </section>
   </main>;
 }

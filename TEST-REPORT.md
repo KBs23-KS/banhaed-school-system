@@ -1,12 +1,11 @@
-# Validation Report
+# TEST REPORT — v7 Final
 
-ตรวจสอบในสภาพแวดล้อมสร้างไฟล์:
+- Homepage requirements checked: ไม่มี logo บนหน้าแรก, ชื่อโรงเรียนกึ่งกลางเหนือ “ยินดีต้อนรับ”, ไม่มีคำว่า “ระบบข้อมูลโรงเรียนบ้านแฮดศึกษา”, ไม่มีชื่อโรงเรียนซ้ำใต้ subtitle, คำขวัญเด่นขึ้น, feature เหลือ 3 ข้อ
+- Desktop landing uses one-viewport layout with responsive fallback for small/short screens
+- Login pages preserved
+- Hybrid Professional internal pages preserved from v6
+- Responsive breakpoints preserved for desktop / tablet / mobile
+- JavaScript / JSX syntax checked by TypeScript parser
+- Local `@/` import targets checked
 
-- JavaScript/JSX syntax parse: PASS (43 files)
-- Local `@/` import path validation: PASS
-- Firestore rules included: PASS
-- Responsive breakpoints included: desktop / tablet / mobile
-- Firebase client config included: PASS
-- Firebase Admin / Drive secrets kept out of source: PASS
-
-หมายเหตุ: `npm install` ใน sandbox ใช้เวลานานเกิน timeout จึงยังไม่ได้รัน Next.js production build ในสภาพแวดล้อมนี้ ให้ Vercel เป็น build verification รอบสุดท้าย หากมี Build Log error ให้แก้จาก codebase นี้ต่อโดยไม่ต้องเริ่มใหม่
+Production `next build` ควรยืนยันรอบสุดท้ายผ่าน Vercel หลังอัปขึ้น GitHub เพราะการติดตั้ง npm ใน sandbox อาจเกินเวลาที่กำหนด

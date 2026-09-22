@@ -59,14 +59,14 @@ function StudentOverview({s,setTab,uploadPhoto,photoBusy}){
     <section className="student-welcome-banner">
       <div className="welcome-avatar">{s.photoDocumentId?<SecureImage documentId={s.photoDocumentId} student alt="รูปนักเรียน"/>:s.firstName?.[0]}<label className="photo-edit-badge" title="เปลี่ยนรูป">{photoBusy?"…":"＋"}<input type="file" accept="image/*" capture="user" hidden disabled={photoBusy} onChange={e=>uploadPhoto(e.target.files?.[0])}/></label></div>
       <div className="welcome-text"><small>สวัสดีครับ/ค่ะ</small><h1>{s.prefix}{s.firstName} {s.lastName}</h1><p>รหัสนักเรียน <b>{s.studentId}</b> · ชั้น ม.{e.grade}/{e.room} · เลขที่ {e.number??"-"}</p></div>
-      <div className="welcome-note">“ทุกก้าวเล็กๆ<br/>คืออนาคตที่ยิ่งใหญ่” 🌱</div>
+      <div className="welcome-note"><b>ข้อมูลของฉัน</b><span>ตรวจสอบและอัปเดตข้อมูลให้เป็นปัจจุบัน</span></div>
     </section>
     <section className="student-category-cards">
       {cards.map(([key,label,icon,color])=>{const done=groupDone(key,s);return <button key={key} className={`student-category-card ${color}`} onClick={()=>setTab(key)}><span className="cat-icon"><UiIcon name={icon} size={25}/></span><span className="cat-copy"><b>{label}</b><small>{done?"ครบถ้วน 100%":"กรอกข้อมูลต่อ"}</small></span><i className={done?"done":"todo"}>{done?"✓":"→"}</i></button>})}
     </section>
     <div className="student-overview-grid">
       <section className="student-news-card"><div className="section-title-row"><div><small>ANNOUNCEMENTS</small><h2>ข่าวประชาสัมพันธ์</h2></div><span>อัปเดตล่าสุด</span></div><div className="news-list"><article><i>1</i><div><b>เปิดตรวจสอบข้อมูลนักเรียน ปีการศึกษา 2569</b><span>กรุณาตรวจสอบข้อมูลส่วนตัวให้ครบถ้วน</span></div><time>19 ก.ย.</time></article><article><i>2</i><div><b>ประชาสัมพันธ์กิจกรรมของโรงเรียน</b><span>ติดตามข่าวสารและกิจกรรมผ่านระบบนี้</span></div><time>16 ก.ย.</time></article><article><i>3</i><div><b>ตรวจสอบเบอร์ติดต่อฉุกเฉิน</b><span>เพื่อให้ครูติดต่อผู้ปกครองได้อย่างรวดเร็ว</span></div><time>12 ก.ย.</time></article></div></section>
-      <section className="student-progress-card"><div className="section-title-row"><div><small>PROFILE PROGRESS</small><h2>ความครบถ้วนของข้อมูล</h2></div></div><div className="big-progress"><div className="progress-ring" style={{"--progress":completion}}><span>{completion}%</span></div><div><b>{completion===100?"ยอดเยี่ยม! ข้อมูลครบแล้ว":"อีกนิดเดียว ข้อมูลจะครบถ้วน"}</b><p>ข้อมูลที่ครบช่วยให้ครูดูแลและติดต่อคุณได้สะดวกขึ้น</p><button onClick={()=>setTab("personal")}>ตรวจสอบข้อมูล →</button></div></div></section>
+      <section className="student-progress-card"><div className="section-title-row"><div><small>PROFILE PROGRESS</small><h2>ความครบถ้วนของข้อมูล</h2></div></div><div className="big-progress"><div className="progress-ring" style={{"--progress":completion}}><span>{completion}%</span></div><div><b>{completion===100?"ยอดเยี่ยม! ข้อมูลครบแล้ว":"ตรวจสอบข้อมูลให้ครบถ้วน"}</b><p>ข้อมูลที่ครบช่วยให้ครูดูแลและติดต่อคุณได้สะดวกขึ้น</p><button onClick={()=>setTab("personal")}>ตรวจสอบข้อมูล →</button></div></div></section>
     </div>
   </>
 }
