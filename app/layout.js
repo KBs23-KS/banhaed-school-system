@@ -1,4 +1,5 @@
 import "./globals.css";
+import "./home-mockup.css";
 
 export const metadata = {
   title: "ระบบข้อมูลโรงเรียนบ้านแฮดศึกษา",
