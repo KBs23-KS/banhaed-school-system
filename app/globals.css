@@ -263,3 +263,68 @@
   .landing-v7 .role-art{min-height:138px}
   .landing-v7 .portal-card-body{padding:4px 16px 15px}
 }
+
+/* =========================================================
+   HOME v8 — rebuilt from scratch to match the approved mockup
+   ========================================================= */
+.bh-home{position:relative;height:100svh;min-height:700px;overflow:hidden;background:#dff2ff;color:#07366d;isolation:isolate}
+.bh-home-bg{position:absolute;inset:0;background:url('/art/home-campus-clean.jpg') center center/cover no-repeat;z-index:-4}
+.bh-home-tint{position:absolute;inset:0;background:linear-gradient(180deg,rgba(230,246,255,.10) 0%,rgba(235,247,255,.04) 58%,rgba(255,255,255,.12) 74%,rgba(255,255,255,.50) 100%);z-index:-3;pointer-events:none}
+.bh-home-main{position:relative;z-index:2;width:min(1080px,calc(100% - 36px));height:calc(100% - 142px);margin:0 auto;padding-top:36px;display:flex;flex-direction:column;align-items:center}
+.bh-home-heading{text-align:center;flex:none;text-shadow:0 2px 0 rgba(255,255,255,.35)}
+.bh-school-name{font-weight:900;font-size:clamp(30px,2.6vw,43px);line-height:1.05;letter-spacing:-.025em;color:#08366d;margin-bottom:4px}
+.bh-welcome-line{display:flex;align-items:center;justify-content:center;gap:18px}
+.bh-welcome-line h1{font-size:clamp(56px,5.3vw,84px);line-height:.95;margin:0;color:#06366e;letter-spacing:-.055em;font-weight:950}
+.bh-home-heading h2{font-size:clamp(21px,1.85vw,30px);line-height:1.15;margin:9px 0 0;color:#174a7c;font-weight:850}
+.bh-motto{margin-top:9px;font-size:clamp(16px,1.35vw,22px);line-height:1.2;font-weight:750;font-style:italic;color:#356593;display:inline-block;border-bottom:2px solid rgba(96,167,64,.55);padding:0 10px 5px}
+.bh-accent{width:38px;height:42px;position:relative;display:inline-block;flex:none}
+.bh-accent:before,.bh-accent:after{content:"";position:absolute;background:#7bb955;border-radius:999px;width:7px;height:22px;top:10px}
+.bh-accent-left:before{left:15px;transform:rotate(-58deg)}.bh-accent-left:after{left:0;top:24px;transform:rotate(-80deg)}
+.bh-accent-right:before{right:15px;transform:rotate(58deg)}.bh-accent-right:after{right:0;top:24px;transform:rotate(80deg)}
+
+.bh-login-grid{width:min(900px,100%);display:grid;grid-template-columns:1fr 1fr;gap:22px;margin-top:88px;align-items:stretch}
+.bh-login-card{height:438px;border-radius:25px;overflow:hidden;border:1.5px solid rgba(255,255,255,.95);box-shadow:0 16px 42px rgba(31,76,119,.18);backdrop-filter:blur(10px);display:grid;grid-template-rows:224px 1fr;position:relative}
+.bh-student-card{background:linear-gradient(180deg,rgba(247,251,255,.97),rgba(250,253,255,.97))}
+.bh-staff-card{background:linear-gradient(180deg,rgba(243,253,248,.97),rgba(248,253,250,.97))}
+.bh-card-art{overflow:hidden;display:flex;align-items:flex-end;justify-content:center;position:relative}
+.bh-card-art:after{content:"";position:absolute;left:0;right:0;bottom:-1px;height:36px;background:linear-gradient(180deg,transparent,rgba(255,255,255,.98))}
+.bh-staff-card .bh-card-art:after{background:linear-gradient(180deg,transparent,rgba(248,253,250,.98))}
+.bh-card-art img{width:100%;height:100%;object-fit:cover;object-position:center center;display:block;transform:scale(1.015)}
+.bh-card-content{padding:3px 29px 23px;display:flex;flex-direction:column;align-items:center;text-align:center}
+.bh-card-title{display:flex;align-items:center;justify-content:center;gap:10px;margin-top:0}
+.bh-card-title h3{font-size:clamp(25px,2.15vw,34px);line-height:1.05;margin:0;color:#07366d;font-weight:900;letter-spacing:-.02em}
+.bh-role-icon{width:45px;height:45px;border-radius:50%;display:grid;place-items:center;flex:none}
+.bh-role-icon.student{background:#e8f3ff;color:#075bb2}.bh-role-icon.staff{background:#e3f8ec;color:#087c54}
+.bh-card-content p{font-size:13px;line-height:1.55;color:#5f7897;margin:8px 0 14px;font-weight:600}
+.bh-enter-button{margin-top:auto;width:100%;height:56px;border:0;border-radius:14px;color:#fff;font-weight:850;font-size:16px;display:flex;align-items:center;justify-content:center;gap:14px;box-shadow:0 10px 22px rgba(24,104,191,.18);transition:transform .18s ease,filter .18s ease}
+.bh-enter-button.student{background:linear-gradient(135deg,#2388fa,#0d6edc)}
+.bh-enter-button.staff{background:linear-gradient(135deg,#31bd72,#0a9659)}
+.bh-enter-button:hover{transform:translateY(-2px);filter:saturate(1.06)}
+.bh-enter-button:active{transform:translateY(0)}
+
+.bh-wave{position:absolute;left:0;right:0;bottom:0;height:184px;z-index:0;pointer-events:none}
+.bh-wave svg{width:100%;height:100%;display:block}
+.bh-feature-row{position:absolute;z-index:3;left:50%;transform:translateX(-50%);bottom:20px;width:min(940px,calc(100% - 40px));height:94px;display:grid;grid-template-columns:repeat(3,1fr);align-items:center}
+.bh-feature{display:flex;align-items:center;justify-content:center;gap:13px;min-height:58px;padding:0 30px}
+.bh-feature+.bh-feature{border-left:1px solid rgba(54,100,145,.18)}
+.bh-feature-icon{width:45px;height:45px;border-radius:50%;display:grid;place-items:center;flex:none}
+.bh-feature-icon.blue{background:#e8f3ff;color:#2768a8}.bh-feature-icon.green{background:#e8f7ec;color:#58a768}.bh-feature-icon.navy{background:#edf3fa;color:#2c5f93}
+.bh-feature>div{display:flex;flex-direction:column;text-align:left}.bh-feature b{font-size:13px;color:#153f70;line-height:1.2}.bh-feature small{font-size:9.5px;color:#6b84a0;line-height:1.4;margin-top:3px;white-space:nowrap}
+.bh-leaf{position:absolute;z-index:4;width:72px;height:115px;bottom:-24px;opacity:.68;filter:blur(.1px)}
+.bh-leaf:before,.bh-leaf:after{content:"";position:absolute;width:42px;height:62px;background:linear-gradient(135deg,#8dcf59,#4caa43);border-radius:100% 0 100% 0;transform:rotate(26deg);box-shadow:0 0 18px rgba(81,152,56,.10)}
+.bh-leaf:after{width:31px;height:48px;left:34px;top:45px;transform:rotate(62deg);background:linear-gradient(135deg,#a9d974,#5fb34d)}
+.bh-leaf-left{left:-10px;transform:rotate(-18deg)}.bh-leaf-right{right:-10px;transform:scaleX(-1) rotate(-18deg)}
+
+@media(max-height:820px) and (min-width:901px){
+  .bh-home{min-height:640px}.bh-home-main{height:calc(100% - 124px);padding-top:22px}.bh-school-name{font-size:31px}.bh-welcome-line h1{font-size:57px}.bh-home-heading h2{font-size:20px;margin-top:5px}.bh-motto{font-size:15px;margin-top:5px;padding-bottom:3px}.bh-accent{transform:scale(.82)}
+  .bh-login-grid{width:min(790px,100%);gap:18px;margin-top:11px}.bh-login-card{height:354px;grid-template-rows:168px 1fr;border-radius:21px}.bh-card-content{padding:2px 22px 16px}.bh-card-title h3{font-size:25px}.bh-role-icon{width:38px;height:38px}.bh-card-content p{font-size:10.5px;margin:5px 0 9px}.bh-enter-button{height:43px;font-size:13px;border-radius:11px}.bh-wave{height:148px}.bh-feature-row{bottom:12px;height:74px}.bh-feature{padding:0 22px}.bh-feature-icon{width:38px;height:38px}.bh-feature b{font-size:11px}.bh-feature small{font-size:8px}
+}
+
+@media(max-width:900px){
+  .bh-home{height:auto;min-height:100svh;overflow:auto;padding-bottom:20px}.bh-home-main{height:auto;width:min(560px,calc(100% - 24px));padding-top:24px;padding-bottom:24px}.bh-school-name{font-size:28px}.bh-welcome-line{gap:8px}.bh-welcome-line h1{font-size:48px}.bh-accent{transform:scale(.7)}.bh-home-heading h2{font-size:18px}.bh-motto{font-size:14px;line-height:1.35}
+  .bh-login-grid{grid-template-columns:1fr;width:min(460px,100%);gap:14px;margin-top:20px}.bh-login-card{height:auto;min-height:415px;grid-template-rows:210px auto}.bh-card-content{padding-bottom:18px}.bh-enter-button{height:48px}
+  .bh-wave{display:none}.bh-feature-row{position:relative;left:auto;transform:none;bottom:auto;width:min(460px,calc(100% - 24px));height:auto;margin:0 auto 18px;display:grid;grid-template-columns:1fr;background:rgba(255,255,255,.88);border:1px solid rgba(255,255,255,.9);border-radius:18px;padding:7px 15px;box-shadow:0 12px 30px rgba(30,78,123,.08)}.bh-feature{justify-content:flex-start;padding:10px 6px}.bh-feature+.bh-feature{border-left:0;border-top:1px solid rgba(54,100,145,.12)}.bh-feature small{white-space:normal}.bh-leaf{display:none}
+}
+@media(max-width:520px){
+  .bh-home-main{padding-top:18px}.bh-school-name{font-size:23px}.bh-welcome-line h1{font-size:39px}.bh-home-heading h2{font-size:16px}.bh-motto{font-size:12.5px}.bh-accent{display:none}.bh-login-grid{width:100%}.bh-login-card{min-height:390px;grid-template-rows:185px auto;border-radius:20px}.bh-card-title h3{font-size:25px}.bh-card-content{padding:2px 17px 16px}.bh-card-content p{font-size:11px}.bh-enter-button{height:46px;font-size:14px}.bh-feature-row{width:calc(100% - 24px)}
+}

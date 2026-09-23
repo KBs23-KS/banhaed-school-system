@@ -118,41 +118,56 @@ export default function Home(){
   if(view==="student")return <StudentLogin onBack={()=>setView("home")}/>;
   if(view==="staff")return <StaffLogin onBack={()=>setView("home")}/>;
 
-  return <main className="landing-page landing-v7">
-    <div className="landing-photo"/><div className="landing-wash"/>
-    <header className="landing-header landing-header-v7">
-      <div className="landing-note">เด็กๆ วันนี้ เพื่ออนาคตที่ยิ่งใหญ่ <span>🌿</span></div>
-    </header>
-    <section className="landing-hero landing-hero-v7">
-      <div className="welcome-copy welcome-copy-v7">
-        <div className="landing-school-name">โรงเรียนบ้านแฮดศึกษา</div>
-        <h1>ยินดีต้อนรับ</h1>
+  return <main className="bh-home">
+    <div className="bh-home-bg" aria-hidden="true"/>
+    <div className="bh-home-tint" aria-hidden="true"/>
+
+    <section className="bh-home-main">
+      <header className="bh-home-heading">
+        <div className="bh-school-name">โรงเรียนบ้านแฮดศึกษา</div>
+        <div className="bh-welcome-line">
+          <span className="bh-accent bh-accent-left" aria-hidden="true"/><h1>ยินดีต้อนรับ</h1><span className="bh-accent bh-accent-right" aria-hidden="true"/>
+        </div>
         <h2>เข้าสู่ระบบข้อมูลนักเรียนและบุคลากร</h2>
-        <small>“เรียนดี กีฬาเยี่ยม เปี่ยมคุณธรรม นำชุมชนพัฒนา”</small>
-      </div>
-      <div className="portal-cards portal-cards-v7">
-        <article className="portal-card student-card">
-          <div className="role-art student"/>
-          <div className="portal-card-body">
-            <div className="role-title"><span><UiIcon name="room" size={30}/></span><h3>นักเรียน</h3></div>
+        <div className="bh-motto">“เรียนดี กีฬาเยี่ยม เปี่ยมคุณธรรม นำชุมชนพัฒนา”</div>
+      </header>
+
+      <div className="bh-login-grid">
+        <article className="bh-login-card bh-student-card">
+          <div className="bh-card-art"><img src="/art/home-students.png" alt="นักเรียน"/></div>
+          <div className="bh-card-content">
+            <div className="bh-card-title"><span className="bh-role-icon student"><UiIcon name="room" size={31}/></span><h3>นักเรียน</h3></div>
             <p>กรอกและแก้ไขข้อมูลส่วนตัว<br/>ตรวจสอบข้อมูลของตนเองได้ตลอดเวลา</p>
-            <button onClick={()=>setView("student")}>เข้าสู่ระบบนักเรียน<UiIcon name="arrow"/></button>
+            <button className="bh-enter-button student" onClick={()=>setView("student")}><span>เข้าสู่ระบบนักเรียน</span><UiIcon name="arrow" size={23}/></button>
           </div>
         </article>
-        <article className="portal-card staff-card">
-          <div className="role-art staff"/>
-          <div className="portal-card-body">
-            <div className="role-title"><span><UiIcon name="students" size={30}/></span><h3>ครูและบุคลากร</h3></div>
-            <p>จัดการข้อมูลนักเรียน ข้อมูลบุคลากร<br/>และงานบุคคลตามสิทธิ์</p>
-            <button onClick={()=>setView("staff")}>เข้าสู่ระบบครู<UiIcon name="arrow"/></button>
+
+        <article className="bh-login-card bh-staff-card">
+          <div className="bh-card-art"><img src="/art/home-staff.png" alt="ครูและบุคลากร"/></div>
+          <div className="bh-card-content">
+            <div className="bh-card-title"><span className="bh-role-icon staff"><UiIcon name="students" size={31}/></span><h3>ครูและบุคลากร</h3></div>
+            <p>จัดการข้อมูลนักเรียน ข้อมูลบุคลากร<br/>และงานบุคคล</p>
+            <button className="bh-enter-button staff" onClick={()=>setView("staff")}><span>เข้าสู่ระบบครู</span><UiIcon name="arrow" size={23}/></button>
           </div>
         </article>
       </div>
     </section>
-    <section className="landing-values landing-values-v7">
-      <div><UiIcon name="book"/><span><b>ส่งเสริมการเรียนรู้</b><small>พัฒนาศักยภาพนักเรียนให้ก้าวไกล</small></span></div>
-      <div><UiIcon name="heart"/><span><b>พัฒนาบุคลากร</b><small>ยกระดับคุณภาพการศึกษาอย่างต่อเนื่อง</small></span></div>
-      <div><UiIcon name="users"/><span><b>โรงเรียนและชุมชน</b><small>สร้างความร่วมมือเพื่อสังคมที่เข้มแข็ง</small></span></div>
+
+    <div className="bh-wave" aria-hidden="true">
+      <svg viewBox="0 0 1600 190" preserveAspectRatio="none">
+        <path d="M0,28 C340,132 1260,132 1600,28 L1600,190 L0,190 Z" fill="rgba(226,241,255,.74)"/>
+        <path d="M0,40 C360,116 1240,116 1600,40 L1600,190 L0,190 Z" fill="rgba(239,248,255,.92)"/>
+        <path d="M0,52 C355,105 1245,105 1600,52 L1600,190 L0,190 Z" fill="#ffffff"/>
+      </svg>
+    </div>
+
+    <section className="bh-feature-row" aria-label="จุดเด่นของระบบ">
+      <div className="bh-feature"><span className="bh-feature-icon blue"><UiIcon name="book" size={30}/></span><div><b>ส่งเสริมการเรียนรู้</b><small>พัฒนาศักยภาพนักเรียนให้ก้าวไกล</small></div></div>
+      <div className="bh-feature"><span className="bh-feature-icon green"><UiIcon name="users" size={30}/></span><div><b>พัฒนาบุคลากร</b><small>ยกระดับคุณภาพการศึกษาอย่างต่อเนื่อง</small></div></div>
+      <div className="bh-feature"><span className="bh-feature-icon navy"><UiIcon name="heart" size={30}/></span><div><b>โรงเรียนและชุมชน</b><small>สร้างความร่วมมือเพื่อสังคมที่เข้มแข็ง</small></div></div>
     </section>
+
+    <span className="bh-leaf bh-leaf-left" aria-hidden="true"/>
+    <span className="bh-leaf bh-leaf-right" aria-hidden="true"/>
   </main>;
 }
