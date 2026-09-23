@@ -1,0 +1,42 @@
+/* Homepage v11 — exact approved mockup on desktop, responsive HTML on mobile. */
+.bh-exact-home{min-height:100dvh;background:#eaf7ff;color:#07366d}
+.bh-exact-desktop{min-height:100dvh;display:grid;place-items:center;overflow:hidden;background:#eaf7ff}
+.bh-exact-canvas{position:relative;width:min(100vw,calc(100dvh * 1.7768331562));aspect-ratio:1672/941;max-height:100dvh;overflow:hidden;background:#eaf7ff}
+.bh-exact-canvas>img{width:100%;height:100%;object-fit:contain;display:block;user-select:none;-webkit-user-drag:none}
+.bh-hotspot{position:absolute;z-index:2;border:0;background:transparent;padding:0;margin:0;cursor:pointer;border-radius:16px;color:transparent;font-size:0}
+.bh-hotspot-student{left:25.15%;top:71.25%;width:21.65%;height:6.75%}
+.bh-hotspot-staff{left:52.05%;top:71.25%;width:21.65%;height:6.75%}
+.bh-hotspot:focus-visible{outline:4px solid rgba(255,255,255,.98);box-shadow:0 0 0 7px rgba(12,98,181,.72)}
+.bh-mobile-home{display:none}
+
+@media(max-width:900px){
+  .bh-exact-desktop{display:none}
+  .bh-exact-home{min-height:100dvh;background:#eef8ff}
+  .bh-mobile-home{display:block;position:relative;min-height:100dvh;overflow:hidden;padding:22px 12px 26px;background:linear-gradient(180deg,rgba(235,248,255,.90),rgba(245,251,255,.95));isolation:isolate}
+  .bh-mobile-bg{position:absolute;inset:0;z-index:-2;background:url('/art/school-hero-bg.jpg') center/cover no-repeat;filter:saturate(.9)}
+  .bh-mobile-home:after{content:"";position:absolute;inset:0;z-index:-1;background:linear-gradient(180deg,rgba(236,248,255,.82),rgba(239,249,255,.76) 48%,rgba(255,255,255,.96) 100%)}
+  .bh-mobile-heading{text-align:center;max-width:520px;margin:0 auto 18px;text-shadow:0 2px 0 rgba(255,255,255,.55)}
+  .bh-mobile-school{font-size:clamp(23px,7vw,31px);font-weight:900;line-height:1.1;color:#07366d}
+  .bh-mobile-heading h1{font-size:clamp(44px,14vw,62px);line-height:.96;margin:7px 0 6px;color:#06366e;letter-spacing:-.05em}
+  .bh-mobile-heading h2{font-size:clamp(16px,4.8vw,21px);margin:0;color:#174a7c;line-height:1.25}
+  .bh-mobile-heading p{font-size:clamp(13px,4vw,17px);font-weight:700;font-style:italic;color:#3c6795;margin:8px 0 0;line-height:1.35}
+  .bh-mobile-cards{display:grid;grid-template-columns:1fr;gap:14px;width:min(480px,100%);margin:0 auto}
+  .bh-mobile-card{overflow:hidden;border-radius:24px;border:1px solid rgba(255,255,255,.96);box-shadow:0 15px 34px rgba(31,76,119,.15);background:rgba(255,255,255,.94);backdrop-filter:blur(10px)}
+  .bh-mobile-card.staff{background:rgba(247,253,249,.96)}
+  .bh-mobile-card>img{display:block;width:100%;height:190px;object-fit:cover;object-position:center center}
+  .bh-mobile-card>div{padding:8px 18px 18px;text-align:center}
+  .bh-mobile-card h3{display:flex;align-items:center;justify-content:center;gap:9px;color:#07366d;font-size:26px;margin:0 0 5px}
+  .bh-mobile-card.student h3 svg{color:#075bb2}.bh-mobile-card.staff h3 svg{color:#087c54}
+  .bh-mobile-card p{font-size:12px;line-height:1.55;color:#637c9a;margin:0 0 12px;font-weight:600}
+  .bh-mobile-card button{width:100%;height:48px;border:0;border-radius:13px;color:white;font-weight:850;font-size:14px;display:flex;align-items:center;justify-content:center;gap:11px}
+  .bh-mobile-card.student button{background:linear-gradient(135deg,#2388fa,#0d6edc)}
+  .bh-mobile-card.staff button{background:linear-gradient(135deg,#31bd72,#0a9659)}
+  .bh-mobile-features{width:min(480px,100%);margin:15px auto 0;background:rgba(255,255,255,.90);border-radius:19px;padding:7px 14px;box-shadow:0 12px 30px rgba(30,78,123,.08)}
+  .bh-mobile-features>div{display:flex;align-items:center;gap:12px;padding:10px 5px;color:#245c96}
+  .bh-mobile-features>div+div{border-top:1px solid rgba(54,100,145,.12)}
+  .bh-mobile-features span{display:flex;flex-direction:column;text-align:left}.bh-mobile-features b{font-size:12px;color:#153f70}.bh-mobile-features small{font-size:9.5px;color:#6b84a0;margin-top:2px}
+}
+
+@media(max-width:430px){
+  .bh-mobile-home{padding-top:17px}.bh-mobile-heading{margin-bottom:14px}.bh-mobile-card>img{height:165px}.bh-mobile-card>div{padding:7px 15px 15px}.bh-mobile-card h3{font-size:23px}.bh-mobile-card button{height:45px}
+}
