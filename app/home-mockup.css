@@ -1,0 +1,344 @@
+/*
+ * Banhaed School System — Home v10 mockup match
+ * Desktop is positioned against the approved 1672×941 mockup.
+ * Mobile keeps the existing responsive layout from globals.css.
+ */
+@media (min-width: 901px) {
+  .bh-home {
+    position: relative;
+    width: 100vw;
+    height: 100svh;
+    min-height: 620px;
+    overflow: hidden;
+    isolation: isolate;
+    background: #dff2ff;
+    font-family: "Noto Sans Thai", "Noto Looped Thai", Tahoma, sans-serif;
+  }
+
+  .bh-home-bg {
+    position: absolute;
+    inset: 0;
+    z-index: -4;
+    background-image: url('/art/home-campus-clean.jpg');
+    background-repeat: no-repeat;
+    background-position: center center;
+    background-size: cover;
+    transform: none;
+    filter: saturate(1.03) contrast(1.01);
+  }
+
+  .bh-home-tint {
+    position: absolute;
+    inset: 0;
+    z-index: -3;
+    pointer-events: none;
+    background:
+      radial-gradient(ellipse 48% 35% at 50% 19%, rgba(233,247,255,.44) 0%, rgba(235,248,255,.24) 58%, rgba(235,248,255,0) 100%),
+      linear-gradient(180deg, rgba(231,246,255,.06) 0%, rgba(235,248,255,.015) 57%, rgba(255,255,255,.06) 72%, rgba(255,255,255,.24) 100%);
+  }
+
+  .bh-home-main {
+    position: absolute;
+    inset: 0;
+    z-index: 2;
+    width: 100%;
+    height: 100%;
+    margin: 0;
+    padding: 0;
+    display: block;
+  }
+
+  .bh-home-heading {
+    position: absolute;
+    z-index: 4;
+    top: 5.65vh;
+    left: 50%;
+    transform: translateX(-50%);
+    width: min(58vw, 970px);
+    text-align: center;
+    color: #08366d;
+    text-shadow: 0 2px 0 rgba(255,255,255,.46);
+  }
+
+  .bh-school-name {
+    margin: 0 0 .7vh;
+    color: #07366d;
+    font-size: clamp(30px, 2.48vw, 43px);
+    font-weight: 900;
+    line-height: 1.02;
+    letter-spacing: -.035em;
+  }
+
+  .bh-welcome-line {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 1.25vw;
+    line-height: 1;
+  }
+
+  .bh-welcome-line h1 {
+    margin: 0;
+    color: #06366e;
+    font-size: clamp(58px, 5.16vw, 86px);
+    font-weight: 950;
+    line-height: .94;
+    letter-spacing: -.055em;
+  }
+
+  .bh-accent {
+    width: 2.4vw;
+    height: 4.7vh;
+    max-width: 40px;
+    max-height: 44px;
+    min-width: 30px;
+    min-height: 34px;
+    position: relative;
+    display: inline-block;
+    flex: none;
+  }
+
+  .bh-accent:before,
+  .bh-accent:after {
+    content: "";
+    position: absolute;
+    background: #7ab957;
+    border-radius: 999px;
+    width: .43vw;
+    min-width: 6px;
+    height: 2.15vh;
+    min-height: 17px;
+    top: 1.05vh;
+  }
+  .bh-accent-left:before { left: 1.05vw; transform: rotate(-58deg); }
+  .bh-accent-left:after { left: .05vw; top: 2.55vh; transform: rotate(-80deg); }
+  .bh-accent-right:before { right: 1.05vw; transform: rotate(58deg); }
+  .bh-accent-right:after { right: .05vw; top: 2.55vh; transform: rotate(80deg); }
+
+  .bh-home-heading h2 {
+    margin: 1.05vh 0 0;
+    color: #174a7c;
+    font-size: clamp(20px, 1.85vw, 31px);
+    font-weight: 850;
+    line-height: 1.08;
+    letter-spacing: -.018em;
+  }
+
+  .bh-motto {
+    display: inline-block;
+    margin-top: 1.0vh;
+    padding: 0 .8vw .45vh;
+    border-bottom: 2px solid rgba(94,166,65,.58);
+    color: #356493;
+    font-size: clamp(15px, 1.38vw, 23px);
+    font-weight: 700;
+    font-style: italic;
+    line-height: 1.12;
+    letter-spacing: .005em;
+  }
+
+  .bh-login-grid {
+    position: absolute;
+    z-index: 5;
+    top: 35.95vh;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 53.82vw;
+    max-width: 1010px;
+    min-width: 720px;
+    height: 48.35vh;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1.22vw;
+    margin: 0;
+    align-items: stretch;
+  }
+
+  .bh-login-card {
+    height: 100%;
+    min-height: 0;
+    overflow: hidden;
+    display: grid;
+    grid-template-rows: 24.85vh 1fr;
+    position: relative;
+    border: 1.5px solid rgba(255,255,255,.96);
+    border-radius: 1.55vw;
+    background: rgba(255,255,255,.97);
+    box-shadow: 0 1.7vh 3.2vh rgba(31,76,119,.18);
+    backdrop-filter: blur(8px);
+  }
+
+  .bh-student-card { background: linear-gradient(180deg,rgba(248,252,255,.985),rgba(250,253,255,.985)); }
+  .bh-staff-card { background: linear-gradient(180deg,rgba(245,253,249,.985),rgba(249,253,250,.985)); }
+
+  .bh-card-art {
+    position: relative;
+    overflow: hidden;
+    display: flex;
+    align-items: stretch;
+    justify-content: center;
+  }
+
+  .bh-card-art:after {
+    content: "";
+    position: absolute;
+    z-index: 1;
+    left: 0;
+    right: 0;
+    bottom: -1px;
+    height: 3.7vh;
+    background: linear-gradient(180deg,transparent,rgba(255,255,255,.99));
+  }
+  .bh-staff-card .bh-card-art:after { background: linear-gradient(180deg,transparent,rgba(249,253,250,.99)); }
+
+  .bh-card-art img {
+    width: 100%;
+    height: 100%;
+    display: block;
+    object-fit: cover;
+    object-position: center center;
+    transform: none;
+  }
+
+  .bh-card-content {
+    position: relative;
+    z-index: 2;
+    padding: .2vh 1.85vw 2.45vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: flex-start;
+    text-align: center;
+  }
+
+  .bh-card-title {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: .62vw;
+    margin: 0;
+  }
+
+  .bh-role-icon {
+    width: 2.9vw;
+    height: 2.9vw;
+    max-width: 49px;
+    max-height: 49px;
+    min-width: 40px;
+    min-height: 40px;
+    display: grid;
+    place-items: center;
+    border-radius: 50%;
+    flex: none;
+  }
+  .bh-role-icon.student { background: #e8f3ff; color: #075bb2; }
+  .bh-role-icon.staff { background: #e3f8ec; color: #087c54; }
+
+  .bh-card-title h3 {
+    margin: 0;
+    color: #07366d;
+    font-size: clamp(25px, 2.12vw, 35px);
+    font-weight: 900;
+    line-height: 1.06;
+    letter-spacing: -.025em;
+  }
+
+  .bh-card-content p {
+    margin: .72vh 0 1.25vh;
+    color: #5f7897;
+    font-size: clamp(11px, .98vw, 16px);
+    font-weight: 600;
+    line-height: 1.42;
+  }
+
+  .bh-enter-button {
+    width: 100%;
+    height: 6.2vh;
+    min-height: 45px;
+    max-height: 61px;
+    margin-top: auto;
+    border: 0;
+    border-radius: .9vw;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: .85vw;
+    color: #fff;
+    font-family: inherit;
+    font-size: clamp(14px, 1.15vw, 18px);
+    font-weight: 850;
+    cursor: pointer;
+    box-shadow: 0 1.05vh 2.1vh rgba(24,104,191,.20);
+    transition: transform .16s ease, filter .16s ease;
+  }
+  .bh-enter-button.student { background: linear-gradient(135deg,#2488fa,#0c6ddd); }
+  .bh-enter-button.staff { background: linear-gradient(135deg,#32bd73,#0a9659); }
+  .bh-enter-button:hover { transform: translateY(-2px); filter: saturate(1.06) brightness(1.02); }
+
+  .bh-wave {
+    position: absolute;
+    z-index: 1;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    height: 21.4vh;
+    pointer-events: none;
+  }
+  .bh-wave svg { width: 100%; height: 100%; display: block; }
+
+  .bh-feature-row {
+    position: absolute;
+    z-index: 6;
+    left: 50%;
+    bottom: 3.25vh;
+    transform: translateX(-50%);
+    width: 61.5vw;
+    max-width: 1050px;
+    min-width: 790px;
+    height: 8.8vh;
+    display: grid;
+    grid-template-columns: repeat(3,1fr);
+    align-items: center;
+  }
+
+  .bh-feature {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: .8vw;
+    min-height: 5.9vh;
+    padding: 0 1.8vw;
+  }
+  .bh-feature + .bh-feature { border-left: 1px solid rgba(54,100,145,.20); }
+
+  .bh-feature-icon {
+    width: 2.85vw;
+    height: 2.85vw;
+    max-width: 47px;
+    max-height: 47px;
+    min-width: 38px;
+    min-height: 38px;
+    border-radius: 50%;
+    display: grid;
+    place-items: center;
+    flex: none;
+  }
+  .bh-feature-icon.blue { background: transparent; color: #2b67a6; }
+  .bh-feature-icon.green { background: transparent; color: #62b76a; }
+  .bh-feature-icon.navy { background: transparent; color: #2e6198; }
+
+  .bh-feature > div { display: flex; flex-direction: column; text-align: left; }
+  .bh-feature b { color: #153f70; font-size: clamp(11px,.98vw,16px); font-weight: 850; line-height: 1.15; }
+  .bh-feature small { margin-top: .25vh; color: #6a84a0; font-size: clamp(8px,.72vw,12px); line-height: 1.3; white-space: nowrap; }
+
+  .bh-leaf { z-index: 7; opacity: .72; }
+  .bh-leaf-left { left: -1.2vw; bottom: -2.8vh; transform: rotate(-18deg) scale(1.08); }
+  .bh-leaf-right { right: -1.0vw; bottom: -2.2vh; transform: scaleX(-1) rotate(-18deg) scale(.88); }
+}
+
+/* Keep desktop geometry stable on shorter laptop screens. */
+@media (min-width:901px) and (max-height:700px) {
+  .bh-home-heading { top: 4.6vh; }
+  .bh-login-grid { top: 35.0vh; }
+  .bh-feature-row { bottom: 2.4vh; }
+}
