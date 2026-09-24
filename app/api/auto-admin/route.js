@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { getAdminAuth, getAdminDb } from "@/lib/firebaseAdmin";
 
 const ADMIN_USERNAME = "admin";
+const ADMIN_EMAIL = `${ADMIN_USERNAME}@banhaed.local`;
 
 export async function POST(request) {
   try {
@@ -11,13 +12,6 @@ export async function POST(request) {
 
     if (username !== ADMIN_USERNAME) {
       return NextResponse.json({ ok: true, skipped: true });
-    }
-
-    const db = getAdminDb();
-    const admins = await db.collection("users").where("roles", "array-contains", "admin").limit(1).get();
-
-    if (!admins.empty) {
-      return NextResponse.json({ ok: true, exists: true });
     }
 
     const expectedPassword = process.env.ADMIN_PASSWORD;
@@ -32,13 +26,17 @@ export async function POST(request) {
       return NextResponse.json({ error: "รหัสผ่าน Admin ไม่ถูกต้อง" }, { status: 401 });
     }
 
-    const email = `${ADMIN_USERNAME}@banhaed.local`;
     const displayName = process.env.ADMIN_DISPLAY_NAME || "ผู้ดูแลระบบ";
     const adminAuth = getAdminAuth();
+    const db = getAdminDb();
     let user;
+    let created = false;
 
+    // Always reconcile Firebase Auth with the configured admin credentials.
+    // This also repairs cases where Firestore has an admin profile but the
+    // corresponding Auth user/password is missing or out of sync.
     try {
-      user = await adminAuth.getUserByEmail(email);
+      user = await adminAuth.getUserByEmail(ADMIN_EMAIL);
       user = await adminAuth.updateUser(user.uid, {
         password: expectedPassword,
         displayName,
@@ -47,26 +45,30 @@ export async function POST(request) {
     } catch (error) {
       if (error?.code === "auth/user-not-found") {
         user = await adminAuth.createUser({
-          email,
+          email: ADMIN_EMAIL,
           password: expectedPassword,
           displayName,
           disabled: false,
         });
+        created = true;
       } else {
         throw error;
       }
     }
 
     const now = new Date().toISOString();
-    await db.collection("users").doc(user.uid).set(
+    const userRef = db.collection("users").doc(user.uid);
+    const existing = await userRef.get();
+
+    await userRef.set(
       {
         username: ADMIN_USERNAME,
-        email,
+        email: ADMIN_EMAIL,
         displayName,
         roles: ["teacher", "hr", "admin"],
-        homerooms: [],
+        homerooms: Array.isArray(existing.data()?.homerooms) ? existing.data().homerooms : [],
         status: "active",
-        createdAt: now,
+        createdAt: existing.data()?.createdAt || now,
         updatedAt: now,
         autoBootstrap: true,
       },
@@ -78,11 +80,16 @@ export async function POST(request) {
       { merge: true }
     );
 
-    return NextResponse.json({ ok: true, created: true, username: ADMIN_USERNAME });
+    return NextResponse.json({
+      ok: true,
+      created,
+      repaired: true,
+      username: ADMIN_USERNAME,
+    });
   } catch (error) {
     console.error("auto-admin error", error);
     return NextResponse.json(
-      { error: error?.message || "ไม่สามารถสร้าง Admin อัตโนมัติได้" },
+      { error: error?.message || "ไม่สามารถเตรียมบัญชี Admin ได้" },
       { status: 500 }
     );
   }
