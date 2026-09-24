@@ -1,175 +1,197 @@
-/*
- * Banhaed School System — Home v10 mockup match
- * Desktop is positioned against the approved 1672×941 mockup.
- * Mobile keeps the existing responsive layout from globals.css.
- */
+/* Homepage v12 — built on a fixed 1672×941 visual coordinate system.
+   Desktop uses the existing approved background / people assets already in the repo.
+   Mobile deliberately keeps the existing responsive rules from globals.css. */
+
 @media (min-width: 901px) {
+  html, body { margin: 0; overflow: hidden; background: #eaf7ff; }
+
   .bh-home {
+    --canvas-w: min(100vw, calc(100svh * 1.7768331562));
+    --canvas-h: min(100svh, calc(100vw / 1.7768331562));
     position: relative;
     width: 100vw;
     height: 100svh;
-    min-height: 620px;
+    min-height: 0;
     overflow: hidden;
-    isolation: isolate;
-    background: #dff2ff;
+    background: #eaf7ff;
+    color: #07366d;
     font-family: "Noto Sans Thai", "Noto Looped Thai", Tahoma, sans-serif;
   }
 
-  .bh-home-bg {
-    position: absolute;
-    inset: 0;
-    z-index: -4;
-    background-image: url('/art/home-campus-clean.jpg');
-    background-repeat: no-repeat;
-    background-position: center center;
-    background-size: cover;
-    transform: none;
-    filter: saturate(1.03) contrast(1.01);
-  }
-
-  .bh-home-tint {
-    position: absolute;
-    inset: 0;
-    z-index: -3;
-    pointer-events: none;
-    background:
-      radial-gradient(ellipse 48% 35% at 50% 19%, rgba(233,247,255,.44) 0%, rgba(235,248,255,.24) 58%, rgba(235,248,255,0) 100%),
-      linear-gradient(180deg, rgba(231,246,255,.06) 0%, rgba(235,248,255,.015) 57%, rgba(255,255,255,.06) 72%, rgba(255,255,255,.24) 100%);
-  }
+  .bh-home-bg, .bh-home-tint { display: none !important; }
 
   .bh-home-main {
+    position: absolute !important;
+    left: 50% !important;
+    top: 50% !important;
+    width: var(--canvas-w) !important;
+    height: var(--canvas-h) !important;
+    min-width: 0 !important;
+    min-height: 0 !important;
+    transform: translate(-50%, -50%) !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    overflow: hidden !important;
+    container-type: inline-size;
+    isolation: isolate;
+    background: url('/art/home-campus-clean.jpg') center / 100% 100% no-repeat !important;
+  }
+
+  .bh-home-main::before {
+    content: "";
     position: absolute;
     inset: 0;
-    z-index: 2;
-    width: 100%;
-    height: 100%;
-    margin: 0;
-    padding: 0;
-    display: block;
+    z-index: -1;
+    pointer-events: none;
+    background:
+      radial-gradient(ellipse 42% 32% at 50% 17%, rgba(244,250,255,.72) 0%, rgba(239,249,255,.38) 58%, rgba(239,249,255,0) 100%),
+      linear-gradient(180deg, rgba(231,246,255,.03) 0%, rgba(255,255,255,0) 58%, rgba(255,255,255,.08) 72%, rgba(255,255,255,.22) 100%);
+  }
+
+  .bh-home-main::after {
+    content: "เด็กๆ วันนี้ เพื่ออนาคตที่ยิ่งใหญ่  🍃";
+    position: absolute;
+    z-index: 9;
+    right: 4.4%;
+    top: 4.35%;
+    padding: 0 .55cqw .35cqw;
+    color: #133f76;
+    border-bottom: .13cqw solid rgba(86,168,64,.78);
+    font-size: 1.20cqw;
+    line-height: 1.1;
+    font-weight: 800;
+    font-style: italic;
+    transform: rotate(-2.5deg);
+    text-shadow: 0 .08cqw 0 rgba(255,255,255,.72);
+    white-space: nowrap;
   }
 
   .bh-home-heading {
-    position: absolute;
-    z-index: 4;
-    top: 5.65vh;
-    left: 50%;
-    transform: translateX(-50%);
-    width: min(58vw, 970px);
+    position: absolute !important;
+    z-index: 5;
+    left: 50% !important;
+    top: 3.15% !important;
+    width: 55.5% !important;
+    transform: translateX(-50%) !important;
     text-align: center;
-    color: #08366d;
-    text-shadow: 0 2px 0 rgba(255,255,255,.46);
+    color: #07366d;
+    text-shadow: 0 .10cqw 0 rgba(255,255,255,.58);
   }
 
   .bh-school-name {
-    margin: 0 0 .7vh;
+    margin: 0 0 .65cqw;
     color: #07366d;
-    font-size: clamp(30px, 2.48vw, 43px);
-    font-weight: 900;
-    line-height: 1.02;
-    letter-spacing: -.035em;
+    font-size: 2.45cqw;
+    line-height: 1.04;
+    font-weight: 950;
+    letter-spacing: -.045em;
+  }
+
+  .bh-school-name::after {
+    content: "";
+    display: block;
+    width: 24cqw;
+    height: .10cqw;
+    margin: .42cqw auto 0;
+    background: linear-gradient(90deg, transparent, rgba(27,80,133,.35), transparent);
   }
 
   .bh-welcome-line {
-    display: flex;
+    display: flex !important;
     align-items: center;
     justify-content: center;
-    gap: 1.25vw;
+    gap: 1.55cqw;
     line-height: 1;
   }
 
   .bh-welcome-line h1 {
     margin: 0;
-    color: #06366e;
-    font-size: clamp(58px, 5.16vw, 86px);
+    color: #073b7b;
+    font-size: 5.20cqw;
+    line-height: .92;
     font-weight: 950;
-    line-height: .94;
     letter-spacing: -.055em;
   }
 
   .bh-accent {
-    width: 2.4vw;
-    height: 4.7vh;
-    max-width: 40px;
-    max-height: 44px;
-    min-width: 30px;
-    min-height: 34px;
     position: relative;
-    display: inline-block;
-    flex: none;
+    width: 3.0cqw;
+    height: 3.4cqw;
+    min-width: 0;
+    min-height: 0;
+    flex: 0 0 auto;
   }
 
-  .bh-accent:before,
-  .bh-accent:after {
+  .bh-accent::before, .bh-accent::after {
     content: "";
     position: absolute;
-    background: #7ab957;
+    width: .42cqw;
+    height: 1.55cqw;
+    min-width: 0;
+    min-height: 0;
     border-radius: 999px;
-    width: .43vw;
-    min-width: 6px;
-    height: 2.15vh;
-    min-height: 17px;
-    top: 1.05vh;
+    background: #6fba55;
   }
-  .bh-accent-left:before { left: 1.05vw; transform: rotate(-58deg); }
-  .bh-accent-left:after { left: .05vw; top: 2.55vh; transform: rotate(-80deg); }
-  .bh-accent-right:before { right: 1.05vw; transform: rotate(58deg); }
-  .bh-accent-right:after { right: .05vw; top: 2.55vh; transform: rotate(80deg); }
+  .bh-accent-left::before { right: .45cqw; top: .1cqw; transform: rotate(-48deg); }
+  .bh-accent-left::after { left: .35cqw; bottom: .15cqw; transform: rotate(-68deg); }
+  .bh-accent-right::before { left: .45cqw; top: .1cqw; transform: rotate(48deg); }
+  .bh-accent-right::after { right: .35cqw; bottom: .15cqw; transform: rotate(68deg); }
 
   .bh-home-heading h2 {
-    margin: 1.05vh 0 0;
-    color: #174a7c;
-    font-size: clamp(20px, 1.85vw, 31px);
-    font-weight: 850;
-    line-height: 1.08;
+    margin: .65cqw 0 0;
+    color: #0d376d;
+    font-size: 1.82cqw;
+    line-height: 1.06;
+    font-weight: 900;
     letter-spacing: -.018em;
   }
 
   .bh-motto {
     display: inline-block;
-    margin-top: 1.0vh;
-    padding: 0 .8vw .45vh;
-    border-bottom: 2px solid rgba(94,166,65,.58);
-    color: #356493;
-    font-size: clamp(15px, 1.38vw, 23px);
-    font-weight: 700;
+    margin-top: .9cqw;
+    padding: 0 1.0cqw .35cqw;
+    color: #315f97;
+    border-bottom: .10cqw solid rgba(103,179,72,.55);
+    font-size: 1.58cqw;
+    line-height: 1.1;
+    font-weight: 750;
     font-style: italic;
-    line-height: 1.12;
-    letter-spacing: .005em;
+    letter-spacing: .012em;
   }
 
   .bh-login-grid {
-    position: absolute;
-    z-index: 5;
-    top: 35.95vh;
-    left: 50%;
-    transform: translateX(-50%);
-    width: 53.82vw;
-    max-width: 1010px;
-    min-width: 720px;
-    height: 48.35vh;
-    display: grid;
+    position: absolute !important;
+    z-index: 6;
+    left: 50% !important;
+    top: 33.05% !important;
+    width: 52.75% !important;
+    height: 46.95% !important;
+    min-width: 0 !important;
+    max-width: none !important;
+    transform: translateX(-50%) !important;
+    display: grid !important;
     grid-template-columns: 1fr 1fr;
-    gap: 1.22vw;
-    margin: 0;
+    gap: 1.15cqw;
+    margin: 0 !important;
     align-items: stretch;
   }
 
   .bh-login-card {
-    height: 100%;
-    min-height: 0;
-    overflow: hidden;
-    display: grid;
-    grid-template-rows: 24.85vh 1fr;
     position: relative;
-    border: 1.5px solid rgba(255,255,255,.96);
-    border-radius: 1.55vw;
-    background: rgba(255,255,255,.97);
-    box-shadow: 0 1.7vh 3.2vh rgba(31,76,119,.18);
-    backdrop-filter: blur(8px);
+    height: 100%;
+    min-height: 0 !important;
+    display: grid;
+    grid-template-rows: 55.0% 45.0%;
+    overflow: hidden;
+    border: .09cqw solid rgba(255,255,255,.96);
+    border-radius: 1.48cqw;
+    background: rgba(255,255,255,.965);
+    box-shadow: 0 .85cqw 1.8cqw rgba(35,83,126,.18);
+    backdrop-filter: blur(.18cqw);
   }
 
-  .bh-student-card { background: linear-gradient(180deg,rgba(248,252,255,.985),rgba(250,253,255,.985)); }
-  .bh-staff-card { background: linear-gradient(180deg,rgba(245,253,249,.985),rgba(249,253,250,.985)); }
+  .bh-student-card { background: linear-gradient(180deg,rgba(249,253,255,.97),rgba(249,253,255,.985)); }
+  .bh-staff-card { background: linear-gradient(180deg,rgba(246,254,249,.97),rgba(249,254,251,.985)); }
 
   .bh-card-art {
     position: relative;
@@ -178,18 +200,15 @@
     align-items: stretch;
     justify-content: center;
   }
-
-  .bh-card-art:after {
+  .bh-card-art::after {
     content: "";
     position: absolute;
     z-index: 1;
-    left: 0;
-    right: 0;
-    bottom: -1px;
-    height: 3.7vh;
-    background: linear-gradient(180deg,transparent,rgba(255,255,255,.99));
+    left: 0; right: 0; bottom: -1px;
+    height: 3.15cqw;
+    background: linear-gradient(180deg,transparent,rgba(255,255,255,.98));
   }
-  .bh-staff-card .bh-card-art:after { background: linear-gradient(180deg,transparent,rgba(249,253,250,.99)); }
+  .bh-staff-card .bh-card-art::after { background: linear-gradient(180deg,transparent,rgba(249,254,251,.99)); }
 
   .bh-card-art img {
     width: 100%;
@@ -197,13 +216,13 @@
     display: block;
     object-fit: cover;
     object-position: center center;
-    transform: none;
+    transform: scale(1.015);
   }
 
   .bh-card-content {
     position: relative;
     z-index: 2;
-    padding: .2vh 1.85vw 2.45vh;
+    padding: .38cqw 2.12cqw 1.35cqw;
     display: flex;
     flex-direction: column;
     align-items: center;
@@ -215,130 +234,187 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    gap: .62vw;
+    gap: .62cqw;
     margin: 0;
   }
 
   .bh-role-icon {
-    width: 2.9vw;
-    height: 2.9vw;
-    max-width: 49px;
-    max-height: 49px;
-    min-width: 40px;
-    min-height: 40px;
+    width: 3.0cqw;
+    height: 3.0cqw;
+    min-width: 0;
+    min-height: 0;
+    max-width: none;
+    max-height: none;
     display: grid;
     place-items: center;
+    flex: 0 0 auto;
     border-radius: 50%;
-    flex: none;
   }
-  .bh-role-icon.student { background: #e8f3ff; color: #075bb2; }
-  .bh-role-icon.staff { background: #e3f8ec; color: #087c54; }
+  .bh-role-icon.student { color: #075bb2; background: transparent; }
+  .bh-role-icon.staff { color: #06935a; background: transparent; }
+  .bh-role-icon svg { width: 2.3cqw !important; height: 2.3cqw !important; }
 
   .bh-card-title h3 {
     margin: 0;
     color: #07366d;
-    font-size: clamp(25px, 2.12vw, 35px);
-    font-weight: 900;
-    line-height: 1.06;
+    font-size: 2.02cqw;
+    line-height: 1.05;
+    font-weight: 950;
     letter-spacing: -.025em;
   }
 
   .bh-card-content p {
-    margin: .72vh 0 1.25vh;
-    color: #5f7897;
-    font-size: clamp(11px, .98vw, 16px);
-    font-weight: 600;
+    margin: .52cqw 0 .68cqw;
+    color: #607a9c;
+    font-size: .94cqw;
     line-height: 1.42;
+    font-weight: 650;
+  }
+  .bh-staff-card .bh-card-content p { font-size: 0; }
+  .bh-staff-card .bh-card-content p::after {
+    content: "จัดการข้อมูลนักเรียน  ข้อมูลบุคลากร\Aและงานบุคคลตามสิทธิ์";
+    white-space: pre;
+    color: #607a9c;
+    font-size: .94cqw;
+    line-height: 1.42;
+    font-weight: 650;
   }
 
   .bh-enter-button {
     width: 100%;
-    height: 6.2vh;
-    min-height: 45px;
-    max-height: 61px;
+    height: 3.75cqw;
+    min-height: 0;
+    max-height: none;
     margin-top: auto;
     border: 0;
-    border-radius: .9vw;
+    border-radius: .78cqw;
     display: flex;
     align-items: center;
     justify-content: center;
-    gap: .85vw;
+    gap: .8cqw;
     color: #fff;
-    font-family: inherit;
-    font-size: clamp(14px, 1.15vw, 18px);
-    font-weight: 850;
+    font: inherit;
+    font-size: 1.10cqw;
+    line-height: 1;
+    font-weight: 900;
     cursor: pointer;
-    box-shadow: 0 1.05vh 2.1vh rgba(24,104,191,.20);
-    transition: transform .16s ease, filter .16s ease;
+    box-shadow: 0 .55cqw 1.2cqw rgba(24,104,191,.18);
+    transition: transform .14s ease, filter .14s ease;
   }
-  .bh-enter-button.student { background: linear-gradient(135deg,#2488fa,#0c6ddd); }
-  .bh-enter-button.staff { background: linear-gradient(135deg,#32bd73,#0a9659); }
-  .bh-enter-button:hover { transform: translateY(-2px); filter: saturate(1.06) brightness(1.02); }
+  .bh-enter-button.student { background: linear-gradient(135deg,#258dff,#0870e6); }
+  .bh-enter-button.staff { background: linear-gradient(135deg,#31c176,#079858); }
+  .bh-enter-button svg { width: 1.35cqw !important; height: 1.35cqw !important; }
+  .bh-enter-button:hover { transform: translateY(-.10cqw); filter: brightness(1.025) saturate(1.05); }
 
   .bh-wave {
-    position: absolute;
-    z-index: 1;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    height: 21.4vh;
+    position: absolute !important;
+    z-index: 3;
+    left: 50% !important;
+    top: 50% !important;
+    width: var(--canvas-w) !important;
+    height: var(--canvas-h) !important;
+    transform: translate(-50%,-50%) !important;
     pointer-events: none;
+    overflow: hidden;
   }
-  .bh-wave svg { width: 100%; height: 100%; display: block; }
+  .bh-wave svg {
+    position: absolute;
+    left: 0;
+    bottom: 0;
+    width: 100%;
+    height: 25.5%;
+    display: block;
+  }
 
   .bh-feature-row {
-    position: absolute;
-    z-index: 6;
-    left: 50%;
-    bottom: 3.25vh;
-    transform: translateX(-50%);
-    width: 61.5vw;
-    max-width: 1050px;
-    min-width: 790px;
-    height: 8.8vh;
-    display: grid;
-    grid-template-columns: repeat(3,1fr);
-    align-items: center;
+    position: absolute !important;
+    z-index: 7;
+    left: 50% !important;
+    top: 50% !important;
+    width: var(--canvas-w) !important;
+    height: var(--canvas-h) !important;
+    min-width: 0 !important;
+    max-width: none !important;
+    transform: translate(-50%,-50%) !important;
+    display: block !important;
+    pointer-events: none;
   }
 
   .bh-feature {
+    position: absolute;
+    top: 84.4%;
+    width: 23.5%;
+    min-height: 0;
+    padding: 0 1.4%;
     display: flex;
     align-items: center;
     justify-content: center;
-    gap: .8vw;
-    min-height: 5.9vh;
-    padding: 0 1.8vw;
+    gap: .95cqw;
+    border: 0 !important;
   }
-  .bh-feature + .bh-feature { border-left: 1px solid rgba(54,100,145,.20); }
+  .bh-feature:nth-child(1) { left: 13.4%; }
+  .bh-feature:nth-child(2) { left: 38.25%; border-left: 1px solid rgba(54,100,145,.18) !important; }
+  .bh-feature:nth-child(3) { left: 63.15%; border-left: 1px solid rgba(54,100,145,.18) !important; }
 
   .bh-feature-icon {
-    width: 2.85vw;
-    height: 2.85vw;
-    max-width: 47px;
-    max-height: 47px;
-    min-width: 38px;
-    min-height: 38px;
-    border-radius: 50%;
+    width: 3.6cqw;
+    height: 3.6cqw;
+    min-width: 0;
+    min-height: 0;
+    max-width: none;
+    max-height: none;
     display: grid;
     place-items: center;
-    flex: none;
+    flex: 0 0 auto;
+    border-radius: 50%;
+    background: rgba(230,242,255,.88) !important;
   }
-  .bh-feature-icon.blue { background: transparent; color: #2b67a6; }
-  .bh-feature-icon.green { background: transparent; color: #62b76a; }
-  .bh-feature-icon.navy { background: transparent; color: #2e6198; }
+  .bh-feature-icon.green { background: rgba(228,248,236,.92) !important; color: #42aa66; }
+  .bh-feature-icon.blue, .bh-feature-icon.navy { color: #2b67a6; }
+  .bh-feature-icon svg { width: 2.25cqw !important; height: 2.25cqw !important; }
 
   .bh-feature > div { display: flex; flex-direction: column; text-align: left; }
-  .bh-feature b { color: #153f70; font-size: clamp(11px,.98vw,16px); font-weight: 850; line-height: 1.15; }
-  .bh-feature small { margin-top: .25vh; color: #6a84a0; font-size: clamp(8px,.72vw,12px); line-height: 1.3; white-space: nowrap; }
+  .bh-feature b { color: #153f70; font-size: 1.02cqw; font-weight: 900; line-height: 1.12; }
+  .bh-feature small { margin-top: .22cqw; color: #6a84a0; font-size: .73cqw; line-height: 1.25; white-space: nowrap; }
 
-  .bh-leaf { z-index: 7; opacity: .72; }
-  .bh-leaf-left { left: -1.2vw; bottom: -2.8vh; transform: rotate(-18deg) scale(1.08); }
-  .bh-leaf-right { right: -1.0vw; bottom: -2.2vh; transform: scaleX(-1) rotate(-18deg) scale(.88); }
+  .bh-feature-row::after {
+    content: "—   โรงเรียนบ้านแฮดศึกษา   —";
+    position: absolute;
+    left: 50%;
+    top: 94.0%;
+    transform: translateX(-50%);
+    color: #55769b;
+    font-size: .86cqw;
+    line-height: 1;
+    letter-spacing: .04em;
+    white-space: nowrap;
+  }
+
+  .bh-leaf {
+    position: absolute;
+    z-index: 8;
+    width: calc(var(--canvas-w) * .085);
+    height: calc(var(--canvas-h) * .15);
+    bottom: calc((100svh - var(--canvas-h))/2 - 1%);
+    opacity: .82;
+    pointer-events: none;
+  }
+  .bh-leaf::before, .bh-leaf::after {
+    content: "";
+    position: absolute;
+    width: 54%;
+    height: 28%;
+    border-radius: 100% 0 100% 0;
+    background: linear-gradient(135deg,#81c85d,#58b744);
+  }
+  .bh-leaf::before { left: 5%; top: 10%; transform: rotate(23deg); }
+  .bh-leaf::after { left: 43%; top: 47%; transform: rotate(63deg); }
+  .bh-leaf-left { left: calc((100vw - var(--canvas-w))/2 - 1.5%); }
+  .bh-leaf-right { right: calc((100vw - var(--canvas-w))/2 - 1.5%); transform: scaleX(-1); }
 }
 
-/* Keep desktop geometry stable on shorter laptop screens. */
-@media (min-width:901px) and (max-height:700px) {
-  .bh-home-heading { top: 4.6vh; }
-  .bh-login-grid { top: 35.0vh; }
-  .bh-feature-row { bottom: 2.4vh; }
+/* Short desktop screens still keep the full approved canvas visible. */
+@media (min-width:901px) and (max-height:650px) {
+  .bh-home { overflow: auto; }
+  html, body { overflow: auto; }
 }
