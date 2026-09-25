@@ -1,6 +1,6 @@
 "use client";
 import { useEffect, useState } from "react";
-import { onAuthStateChanged, signOut } from "firebase/auth";
+import { signOut } from "firebase/auth";
 import { usePathname } from "next/navigation";
 import { auth } from "@/lib/firebase";
 import { staffFetch } from "@/lib/apiClient";
@@ -13,13 +13,32 @@ export default function StaffShell({ children, title = "" }) {
   const pathname = usePathname();
 
   useEffect(() => {
-    const off = onAuthStateChanged(auth, async (user) => {
-      if (!user) { location.href = "/?login=staff"; return; }
-      try { const d = await staffFetch("/api/staff/me"); setProfile(d.user); }
-      catch { location.href = "/?login=staff"; }
-      finally { setLoading(false); }
-    });
-    return off;
+    let cancelled = false;
+    async function checkAuth() {
+      try {
+        if (typeof auth.authStateReady === "function") await auth.authStateReady();
+      } catch {}
+      if (cancelled) return;
+      const user = auth.currentUser;
+      if (!user) {
+        setLoading(false);
+        location.href = "/?login=staff";
+        return;
+      }
+      try {
+        const d = await staffFetch("/api/staff/me");
+        if (!cancelled) setProfile(d.user);
+      } catch {
+        if (!cancelled) {
+          setLoading(false);
+          location.href = "/?login=staff";
+        }
+        return;
+      }
+      if (!cancelled) setLoading(false);
+    }
+    checkAuth();
+    return () => { cancelled = true; };
   }, []);
 
   if (loading) return <main className="screen-loader"><div className="loader-orb"/><p>กำลังตรวจสอบสิทธิ์ผู้ใช้งาน...</p></main>;

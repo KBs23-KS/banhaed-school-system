@@ -117,6 +117,8 @@ function StaffLogin({onBack}){
       }
 
       await signInWithEmailAndPassword(auth,emailForLogin,password);
+      if (typeof auth.authStateReady === "function") await auth.authStateReady();
+      await auth.currentUser?.getIdToken(true);
       location.href="/staff";
     }catch(error){
       setError(error?.message||"ชื่อผู้ใช้หรือรหัสผ่านไม่ถูกต้อง");
