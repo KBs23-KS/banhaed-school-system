@@ -96,31 +96,37 @@ function StaffLogin({onBack}){
   async function submit(e){
     e.preventDefault();setLoading(true);setError("");
     try{
-      const normalizedUsername=username.trim().toLowerCase();
+      const rawUsername=username.trim().toLowerCase();
+      const normalizedUsername=rawUsername.split("@")[0];
+      let emailForLogin;
 
-      if(normalizedUsername==="admin"){
+      // Admin may already be saved by the browser as admin@banhaed.ac.th.
+      // Treat admin@... as the same Admin account as "admin".
+      const isAdminLogin=normalizedUsername==="admin";
+      if(isAdminLogin){
         const bootstrap=await fetch("/api/auto-admin",{
           method:"POST",
           headers:{"Content-Type":"application/json"},
-          body:JSON.stringify({username:normalizedUsername,password})
+          body:JSON.stringify({username:rawUsername,password})
         });
         const bootstrapData=await bootstrap.json().catch(()=>({}));
-        if(!bootstrap.ok){
-          throw new Error(bootstrapData.error||"ไม่สามารถเตรียมบัญชี Admin ได้");
-        }
+        if(!bootstrap.ok) throw new Error(bootstrapData.error||"ไม่สามารถเตรียมบัญชี Admin ได้");
+        emailForLogin=bootstrapData.loginEmail||"admin@banhaed.local";
+      }else{
+        emailForLogin=rawUsername.includes("@")?rawUsername:`${normalizedUsername}@banhaed.local`;
       }
 
-      const email=username.includes("@")?username.trim():`${normalizedUsername}@banhaed.local`;
-      await signInWithEmailAndPassword(auth,email,password); location.href="/staff";
+      await signInWithEmailAndPassword(auth,emailForLogin,password);
+      location.href="/staff";
     }catch(error){
       setError(error?.message||"ชื่อผู้ใช้หรือรหัสผ่านไม่ถูกต้อง");
       setLoading(false);
     }
   }
   return <LoginFrame type="staff" onBack={onBack}>
-    <div className="login-form-head"><small>STAFF PORTAL</small><h2>เข้าสู่ระบบครูและบุคลากร</h2><p>ใช้บัญชีที่ผู้ดูแลระบบโรงเรียนกำหนดให้ • Admin ครั้งแรกใช้ username: admin</p></div>
+    <div className="login-form-head"><small>STAFF PORTAL</small><h2>เข้าสู่ระบบครูและบุคลากร</h2><p>ใช้บัญชีที่ผู้ดูแลระบบโรงเรียนกำหนดให้ • Admin ใช้ username: admin</p></div>
     <form className="pretty-form" onSubmit={submit}>
-      <label>ชื่อผู้ใช้<div className="input-with-icon"><UiIcon name="person" size={18}/><input value={username} onChange={e=>setUsername(e.target.value)} placeholder="เช่น somchai" autoComplete="username"/></div></label>
+      <label>ชื่อผู้ใช้<div className="input-with-icon"><UiIcon name="person" size={18}/><input value={username} onChange={e=>setUsername(e.target.value)} placeholder="เช่น admin หรือ somchai" autoComplete="username"/></div></label>
       <label>รหัสผ่าน<div className="input-with-icon"><UiIcon name="shield" size={18}/><input value={password} onChange={e=>setPassword(e.target.value)} type={show?"text":"password"} placeholder="กรอกรหัสผ่าน" autoComplete="current-password"/><button type="button" className="peek-btn" onClick={()=>setShow(v=>!v)}><UiIcon name="eye" size={18}/></button></div></label>
       {error&&<div className="form-error">{error}</div>}
       <button className="big-login green" disabled={loading}>{loading?"กำลังเข้าสู่ระบบ...":"เข้าสู่ระบบ"}<UiIcon name="arrow"/></button>
