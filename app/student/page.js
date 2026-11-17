@@ -1,5 +1,6 @@
 "use client";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
+import { changedStudentProfileFields } from "@/lib/studentProfile.mjs";
 import UiIcon from "@/components/UiIcon";
 import SecureImage from "@/components/SecureImage";
 import { compressSquareImage } from "@/lib/imageClient";
@@ -15,10 +16,23 @@ const tabs=[
 const empty={address:{registered:{},current:{}},family:{guardian:{},father:{},mother:{}},emergency:{primary:{},secondary:{}},additional:{},learning:{}};
 
 export default function StudentPage(){
+  const savedProfileRef=useRef({});
   const [pwd,setPwd]=useState({currentPassword:"",newPassword:"",confirm:""}); const [s,setS]=useState(null),[tab,setTab]=useState("overview"),[msg,setMsg]=useState(""),[busy,setBusy]=useState(false),[menu,setMenu]=useState(false),[photoBusy,setPhotoBusy]=useState(false);
-  async function load(){const r=await fetch("/api/student/profile");if(!r.ok){location.href="/?login=student";return;}const d=await r.json();setS({...empty,...d.student,address:{registered:{},current:{},...(d.student.address||{})},family:{guardian:{},father:{},mother:{},...(d.student.family||{})},emergency:{primary:{},secondary:{},...(d.student.emergency||{})},additional:d.student.additional||{},learning:d.student.learning||{}})}
+  async function load(){const r=await fetch("/api/student/profile");if(!r.ok){location.href="/?login=student";return;}const d=await r.json();savedProfileRef.current=d.student;setS({...empty,...d.student,address:{registered:{},current:{},...(d.student.address||{})},family:{guardian:{},father:{},mother:{},...(d.student.family||{})},emergency:{primary:{},secondary:{},...(d.student.emergency||{})},additional:d.student.additional||{},learning:d.student.learning||{}})}
   useEffect(()=>{load()},[]);
-  async function save(){setBusy(true);setMsg("");const r=await fetch("/api/student/profile",{method:"PATCH",headers:{"Content-Type":"application/json"},body:JSON.stringify(s)});const d=await r.json();setBusy(false);setMsg(r.ok?`บันทึกข้อมูลเรียบร้อย • ความครบถ้วน ${d.profileCompletion}%`:d.error||"บันทึกไม่สำเร็จ");if(r.ok)setS(v=>({...v,profileCompletion:d.profileCompletion,profileStatus:d.profileCompletion===100?"complete":"incomplete"}))}
+  async function save(){
+    const patch=changedStudentProfileFields(savedProfileRef.current,s);
+    if(!Object.keys(patch).length){setMsg("ยังไม่มีข้อมูลเปลี่ยนแปลง");return;}
+    setBusy(true);setMsg("");
+    try {
+      const r=await fetch("/api/student/profile",{method:"PATCH",headers:{"Content-Type":"application/json"},body:JSON.stringify(patch)});
+      const d=await r.json();
+      if(!r.ok)throw new Error(d.error||"บันทึกไม่สำเร็จ");
+      await load();
+      setMsg(`บันทึกข้อมูลเรียบร้อย • ความครบถ้วน ${d.profileCompletion}%`);
+    } catch(e){setMsg(e.message||"บันทึกข้อมูลไม่สำเร็จ");}
+    finally{setBusy(false);}
+  }
   function set(k,v){setS({...s,[k]:v})}
   function nested(section,k,v){setS({...s,[section]:{...(s[section]||{}),[k]:v}})}
   function deep(section,sub,k,v){setS({...s,[section]:{...(s[section]||{}),[sub]:{...(s[section]?.[sub]||{}),[k]:v}}})}

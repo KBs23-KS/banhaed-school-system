@@ -1,6 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import {sanitizeStudentProfile, sanitizeStaffStudentPatch, mergeStudentProfile} from "../lib/studentProfile.mjs";
+import {sanitizeStudentProfile, sanitizeStaffStudentPatch, mergeStudentProfile, changedStudentProfileFields} from "../lib/studentProfile.mjs";
 
 test("student cannot modify enrollment, roles, auth, or document ownership", () => {
   const result = sanitizeStudentProfile({
@@ -52,4 +52,36 @@ test("invalid class numbers and statuses cannot be written by Admin", () => {
 test("valid current enrollment preserves blank number as null", () => {
   const result=sanitizeStaffStudentPatch({currentEnrollment:{academicYear:"2569",grade:"2",room:"1",number:""}},true);
   assert.equal(result.currentEnrollment.number,null);
+});
+
+test("editing one contact field does not resubmit stale identity or enrollment data",()=>{
+  const old={
+    studentId:"111", firstName:"Original", currentEnrollment:{grade:"1",room:"1"},
+    address:{registered:{houseNo:"1",province:"Khon Kaen"}},
+    phone:"0800000000", nickname:"A"
+  };
+  const next={...old,phone:"0811111111"};
+  assert.deepEqual(changedStudentProfileFields(old,next),{phone:"0811111111"});
+});
+
+test("nested diff contains only explicitly edited subfield",()=>{
+  const old={address:{registered:{houseNo:"1",province:"Khon Kaen"},travelMethod:"walk"},
+    family:{guardian:{name:"Guardian",phone:"0890000000"}}};
+  const next={...old,address:{...old.address,registered:{...old.address.registered,houseNo:"2"}}};
+  assert.deepEqual(changedStudentProfileFields(old,next),{address:{registered:{houseNo:"2"}}});
+  const patch=sanitizeStudentProfile(changedStudentProfileFields(old,next));
+  assert.equal(mergeStudentProfile(old,patch).address.registered.province,"Khon Kaen");
+  assert.equal(mergeStudentProfile(old,patch).family.guardian.phone,"0890000000");
+});
+
+test("unchanged form and non-profile fields do not generate data writes",()=>{
+  const old={studentId:"123",auth:{activated:true},photoDocumentId:"photo",nickname:"A"};
+  const next={...old,photoDocumentId:"other",auth:{activated:false}};
+  assert.deepEqual(changedStudentProfileFields(old,next),{});
+});
+
+test("removing a value is sent as an intentional edit",()=>{
+  const old={phone:"0811111111",learning:{favoriteSubjects:["Thai","Math"]}};
+  const next={phone:"",learning:{favoriteSubjects:[]}};
+  assert.deepEqual(changedStudentProfileFields(old,next),{phone:"",learning:{favoriteSubjects:[]}});
 });

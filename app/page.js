@@ -44,15 +44,12 @@ function StudentLogin({onBack}) {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
 
-  async function lookup(event) {
-    event.preventDefault(); if(firebasePreviewLocked){setError("Preview ยังไม่ได้เชื่อม Firebase สำหรับทดสอบ กรุณาติดต่อผู้ดูแลระบบ");return;} setLoading(true); setError("");
-    try {
-      const r = await fetch("/api/student/lookup", {method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({studentId})});
-      const data = await r.json();
-      if (!r.ok) throw new Error(data.error || "ไม่พบข้อมูลนักเรียน");
-      setStep(data.student.activated ? "login" : "activate");
-    } catch (e) { setError(e.message); }
-    finally { setLoading(false); }
+  function lookup(event) {
+    event.preventDefault();
+    setError("");
+    if(firebasePreviewLocked){setError("ระบบทดสอบยังไม่ได้เชื่อม Firebase ที่แยกจากระบบจริง");return;}
+    if(!/^[0-9A-Za-z-]{1,32}$/.test(studentId.trim())){setError("กรุณากรอกรหัสนักเรียนให้ถูกต้อง");return;}
+    setStep("choice");
   }
 
   async function authenticate(event) {
@@ -67,13 +64,19 @@ function StudentLogin({onBack}) {
     } catch (e) { setError(e.message); setLoading(false); }
   }
   return <LoginFrame type="student" onBack={onBack}>
-    <div className="login-form-head"><small>STUDENT PORTAL</small><h2>{step === "lookup" ? "เข้าสู่ระบบนักเรียน" : step === "activate" ? "เปิดใช้งานครั้งแรก" : "กรอกรหัสผ่าน"}</h2><p>{step === "lookup" ? "ใช้รหัสนักเรียนของคุณเพื่อตรวจสอบบัญชี" : step === "activate" ? "ต้องใช้รหัสเปิดใช้งานจากโรงเรียนก่อนตั้งรหัสผ่าน" : "กรอกรหัสผ่านที่คุณตั้งไว้เพื่อเข้าสู่ระบบ"}</p></div>
+    <div className="login-form-head"><small>STUDENT PORTAL</small><h2>{step === "lookup" ? "เข้าสู่ระบบนักเรียน" : step === "choice" ? "เลือกวิธีเข้าสู่ระบบ" : step === "activate" ? "เปิดใช้งานครั้งแรก" : "กรอกรหัสผ่าน"}</h2><p>{step === "lookup" ? "กรอกรหัสนักเรียนเพื่อดำเนินการต่อ" : step === "choice" ? "เลือกเข้าสู่ระบบ หรือเปิดบัญชีครั้งแรกด้วยรหัสที่ได้รับจากโรงเรียน" : step === "activate" ? "ต้องใช้รหัสเปิดใช้งานจากโรงเรียนก่อนตั้งรหัสผ่าน" : "กรอกรหัสผ่านที่คุณตั้งไว้เพื่อเข้าสู่ระบบ"}</p></div>
     {step === "lookup" && <form className="pretty-form" onSubmit={lookup}>
       <label>รหัสนักเรียน<div className="input-with-icon"><UiIcon name="person" size={18}/><input value={studentId} onChange={e=>setStudentId(e.target.value)} placeholder="รหัสประจำตัวนักเรียน" autoFocus required/></div></label>
       {error && <div className="form-error">{error}</div>}
-      <button className="big-login blue" disabled={loading}>{loading ? "กำลังตรวจสอบ..." : "ตรวจสอบรหัสนักเรียน"}<UiIcon name="arrow"/></button>
+      <button className="big-login blue" disabled={loading}>{loading ? "กำลังดำเนินการ..." : "ถัดไป"}<UiIcon name="arrow"/></button>
       <div className="login-helper"><UiIcon name="shield" size={18}/><span><b>เปิดใช้งานครั้งแรก</b><small>ขอรับรหัสเปิดใช้งานเฉพาะตัวจากงานทะเบียนหรือผู้ดูแลระบบ</small></span></div>
     </form>}
+    {step === "choice" && <div className="pretty-form">
+      <div className="selected-user"><div className="selected-avatar">น</div><div><b>รหัสนักเรียน {studentId.trim()}</b><span>เลือกวิธีเข้าสู่ระบบของคุณ</span></div></div>
+      <button className="big-login blue" onClick={()=>{setStep("login");setPassword("");setError("")}}>มีรหัสผ่านแล้ว — เข้าสู่ระบบ<UiIcon name="arrow"/></button>
+      <button className="big-login" onClick={()=>{setStep("activate");setPassword("");setError("")}}>ยังไม่เคยเปิดบัญชี — ใช้รหัสเปิดใช้งาน<UiIcon name="shield"/></button>
+      <button className="text-button" onClick={()=>setStep("lookup")}>เปลี่ยนรหัสนักเรียน</button>
+    </div>}
     {(step === "login" || step === "activate") && <form className="pretty-form" onSubmit={authenticate}>
       <div className="selected-user"><div className="selected-avatar">น</div><div><b>รหัสนักเรียน {studentId}</b><span>{step === "activate" ? "เปิดใช้งานบัญชีใหม่" : "บัญชีที่เปิดใช้งานแล้ว"}</span></div></div>
       {step === "activate" && <label>รหัสเปิดใช้งานจากโรงเรียน<div className="input-with-icon"><UiIcon name="shield" size={18}/><input value={activationCode} onChange={e=>setActivationCode(e.target.value.trim().toUpperCase())} placeholder="รหัส 18 ตัวอักษร" autoComplete="one-time-code" required/></div></label>}
@@ -82,7 +85,7 @@ function StudentLogin({onBack}) {
       {step === "login" && <div className="login-helper"><UiIcon name="shield" size={18}/><span><small>บัญชีเดิมที่ยังไม่ได้เปลี่ยนรหัสผ่าน สามารถใช้วันเดือนปีเกิด 8 หลักได้ชั่วคราว แล้วเปลี่ยนรหัสผ่านในหน้าข้อมูลของฉัน</small></span></div>}
       {error && <div className="form-error">{error}</div>}
       <button className="big-login blue" disabled={loading}>{loading ? "กำลังดำเนินการ..." : step === "activate" ? "เปิดใช้และเข้าสู่ระบบ" : "เข้าสู่ระบบ"}<UiIcon name="arrow"/></button>
-      <button type="button" className="text-button" onClick={()=>{setStep("lookup");setPassword("");setActivationCode("");setConfirmPassword("");setError("")}}>เปลี่ยนรหัสนักเรียน</button>
+      <button type="button" className="text-button" onClick={()=>{setStep("choice");setPassword("");setActivationCode("");setConfirmPassword("");setError("")}}>เปลี่ยนรหัสนักเรียน</button>
     </form>}
   </LoginFrame>;
 }
