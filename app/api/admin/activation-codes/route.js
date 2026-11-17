@@ -25,7 +25,16 @@ export async function POST(request) {
       const code = makeActivationCode();
       const hashed = hashDobPassword(code);
       const expiresAt = Date.now() + 7 * 86400000;
-      await ref.set({ auth: { ...(snap.data().auth || {}), activation: { salt: hashed.salt, hash: hashed.hash, expiresAt } } }, { merge: true });
+      try {
+        await db.runTransaction(async tx => {
+          const latest = await tx.get(ref);
+          if (!latest.exists || latest.data().status !== "active" || latest.data().auth?.activated) throw new Error("NOT_ELIGIBLE");
+          tx.update(ref, { "auth.activation": { salt: hashed.salt, hash: hashed.hash, expiresAt } });
+        });
+      } catch (error) {
+        if (error.message === "NOT_ELIGIBLE") { results.push({ studentId, error: "ไม่พบนักเรียนหรือเปิดใช้งานแล้ว" }); continue; }
+        throw error;
+      }
       results.push({ studentId, code, expiresAt });
     }
     await db.collection("auditLogs").add({ actorUid: admin.uid, action: "issue_student_activation_codes", count: results.filter(x => x.code).length, createdAt: new Date().toISOString() });
