@@ -30,6 +30,7 @@ export async function PATCH(request) {
     await session.ref.set({ ...body, profileCompletion: completion, profileStatus: completion === 100 ? "complete" : "incomplete", updatedAt: new Date().toISOString() }, { merge: true });
     return NextResponse.json({ ok: true, profileCompletion: completion });
   } catch (error) {
+    if (error.message === "INVALID_BIRTH_DATE") return NextResponse.json({ error: "วันเดือนปีเกิดต้องมี 8 หลัก" }, { status: 400 });
     if (error.message === "INVALID_CITIZEN_ID") return NextResponse.json({ error: "เลขประจำตัวประชาชนต้องมี 13 หลัก" }, { status: 400 });
     if (error.message === "INVALID_PROFILE") return NextResponse.json({ error: "รูปแบบข้อมูลไม่ถูกต้อง" }, { status: 400 });
     return NextResponse.json({ error: "บันทึกข้อมูลไม่สำเร็จ" }, { status: 500 });
