@@ -4,6 +4,7 @@ import { requireStaff, staffError } from "@/lib/staffAuth";
 import { getAdminDb } from "@/lib/firebaseAdmin";
 import { getSystemSettings } from "@/lib/system";
 import { verifyRequestOrigin } from "@/lib/studentSecurity";
+import { recoveryTooSoon } from "@/lib/rolloverGuards.mjs";
 
 const validId = value => /^[0-9]{4}-[0-9]{4}-[0-9]{13}-[0-9a-f]{8}$/.test(String(value || ""));
 
@@ -32,7 +33,7 @@ export async function POST(request) {
     const snap=await ref.get();
     if(!snap.exists)return NextResponse.json({error:"ไม่พบข้อมูลสำรอง"},{status:404});
     const info=snap.data();
-    if(!["prepared","committed","restoring"].includes(info.state))return NextResponse.json({error:"ข้อมูลสำรองนี้ไม่สามารถกู้คืนได้"},{status:409});
+    if(!["prepared","committed","in_progress","restoring"].includes(info.state))return NextResponse.json({error:"ข้อมูลสำรองนี้ไม่สามารถกู้คืนได้"},{status:409});
     const settings=await getSystemSettings();
     if(![info.fromYear, info.toYear].includes(String(settings.currentAcademicYear))){
       return NextResponse.json({error:"ปีการศึกษาไม่ตรงกับข้อมูลสำรอง ไม่สามารถกู้คืนข้ามปีได้"},{status:409});
@@ -48,12 +49,19 @@ export async function POST(request) {
     const preview={backupId:id,fromYear:info.fromYear,toYear:info.toYear,existingStudents:records.size,newStudents:newIds.length,affectedEnrollments:enrolled.length,state:info.state};
     if(body.mode!=="commit")return NextResponse.json({preview});
     if(body.confirmation!=="RESTORE:"+id)return NextResponse.json({error:"กรุณายืนยันรหัสข้อมูลสำรองให้ถูกต้อง"},{status:400});
+    if(recoveryTooSoon(info.state,info)) return NextResponse.json({error:"ระบบเลื่อนชั้นหรือกู้คืนยังอาจกำลังดำเนินการอยู่ กรุณาตรวจสอบก่อนทำซ้ำ"},{status:409});
     // Recheck the year before the first write and mark the operation as restoring.
+    const systemRef=db.collection("settings").doc("system");
     await db.runTransaction(async tx=>{
-      const [latest,year]=await Promise.all([tx.get(ref),tx.get(db.collection("settings").doc("system"))]);
-      if(!["prepared","committed","restoring"].includes(latest.data()?.state))throw Error("RESTORE_STATE");
-      const currentYear=String(year.data()?.currentAcademicYear || settings.currentAcademicYear);
+      const [latest,year]=await Promise.all([tx.get(ref),tx.get(systemRef)]);
+      const state=latest.data()?.state;
+      if(!["prepared","committed","in_progress","restoring"].includes(state))throw Error("RESTORE_STATE");
+      const liveYear=year.data()||{};
+      if(liveYear.rolloverLock && liveYear.rolloverLock!==id)throw Error("RESTORE_BUSY");
+      const currentYear=String(liveYear.currentAcademicYear || settings.currentAcademicYear);
       if(![info.fromYear,info.toYear].includes(currentYear))throw Error("RESTORE_YEAR");
+      if(recoveryTooSoon(state,latest.data()||{}))throw Error("RESTORE_BUSY");
+      tx.set(systemRef,{rolloverLock:id},{merge:true});
       tx.update(ref,{state:"restoring",restoringAt:new Date().toISOString(),restoringBy:admin.uid});
     });
     // Restore only enrollment/status metadata; never overwrite student-entered profile data.
@@ -98,12 +106,16 @@ export async function POST(request) {
         }
       });
     }
-    await db.collection("settings").doc("system").set({currentAcademicYear:info.fromYear},{merge:true});
-    await ref.update({state:"restored",restoredAt:new Date().toISOString(),restoredBy:admin.uid});
-    await db.collection("auditLogs").add({actorUid:admin.uid,action:"restore_academic_year_rollover",backupId:id,createdAt:new Date().toISOString()});
+    await db.runTransaction(async tx=>{
+      const live=await tx.get(systemRef);
+      if(live.data()?.rolloverLock!==id)throw Error("RESTORE_BUSY");
+      tx.set(systemRef,{currentAcademicYear:info.fromYear,rolloverLock:FieldValue.delete()},{merge:true});
+      tx.update(ref,{state:"restored",restoredAt:new Date().toISOString(),restoredBy:admin.uid});
+    });
+    await db.collection("auditLogs").add({actorUid:admin.uid,action:"restore_academic_year_rollover",backupId:id,createdAt:new Date().toISOString()}).catch(()=>{});
     return NextResponse.json({ok:true,preview});
   } catch(e) {
-    if(["RESTORE_STATE","RESTORE_YEAR"].includes(e.message))return NextResponse.json({error:"สถานะหรือปีการศึกษาเปลี่ยนไป กรุณาลองใหม่"},{status:409});
+    if(["RESTORE_STATE","RESTORE_YEAR","RESTORE_BUSY"].includes(e.message))return NextResponse.json({error:"สถานะหรือปีการศึกษาเปลี่ยนไป กรุณาลองใหม่"},{status:409});
     const x=staffError(e);
     return NextResponse.json({error:x.message},{status:x.status});
   }

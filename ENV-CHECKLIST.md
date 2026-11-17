@@ -8,7 +8,7 @@
 
 | Key | Production | Preview + Development |
 | --- | --- | --- |
-| `FIREBASE_PROJECT_ID` | `banhaed-school-system-43dc6` | ค่าเดิมชั่วคราว — **ต้องเปลี่ยนเป็น Firebase test project ก่อนเปิด Backend ทดสอบ** |
+| `FIREBASE_PROJECT_ID` | `banhaed-school-system-43dc6` | **ไม่กำหนด** — ต้องตั้งค่า Firebase test project แยกเท่านั้น |
 | `STUDENT_SESSION_SECRET` | ตั้งค่าแบบเข้ารหัสแล้ว | ตั้งค่าแบบเข้ารหัสแล้ว **คนละค่ากับ Production** |
 
 ## ค่าที่ยังต้องเชื่อมจากบริการจริง
@@ -34,7 +34,7 @@
 
 ## ตั้งค่า Preview ให้แยก Production
 1. สร้าง Firebase **test** project ใหม่ก่อนใช้ Preview กับข้อมูลทดสอบ
-2. ใน Vercel Preview ตั้ง `FIREBASE_PROJECT_ID` เป็น test project (คนละค่ากับ production)
+2. ใน Vercel Preview ยังไม่มี `FIREBASE_PROJECT_ID` จนกว่าจะกำหนด test project (คนละค่ากับ production) — อย่าคัดลอก Production Project ID มาใช้
 3. ตั้ง Firebase service account credentials สำหรับ test project เท่านั้น
 4. ตั้ง `NEXT_PUBLIC_FIREBASE_API_KEY`, `NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN`,
    `NEXT_PUBLIC_FIREBASE_PROJECT_ID`, `NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID`,

@@ -1,4 +1,5 @@
 import crypto from "crypto";
+import { FieldValue } from "firebase-admin/firestore";
 import { NextResponse } from "next/server";
 import { requireStaff, staffError } from "@/lib/staffAuth";
 import { getAdminDb } from "@/lib/firebaseAdmin";
@@ -46,6 +47,7 @@ export async function POST(request) {
     const fromYear=String(body.fromYear || settings.currentAcademicYear);
     const toYear=String(body.toYear || Number(fromYear)+1);
     if (fromYear!==String(settings.currentAcademicYear) || Number(toYear)!==Number(fromYear)+1) return NextResponse.json({error:"ปีการศึกษาปัจจุบันมีการเปลี่ยนแปลง กรุณาตรวจสอบใหม่"},{status:409});
+    if (settings.rolloverLock) return NextResponse.json({error:"มีการเลื่อนชั้นหรือกู้คืนข้อมูลที่ยังดำเนินการอยู่ กรุณาตรวจสอบก่อน"},{status:409});
     const rows=normalizeRows(body.rows);
     const foundIds=new Set(rows.map(r=>r.studentId));
     const current=await db.collection("students").where("status","==","active").get();
@@ -109,6 +111,16 @@ export async function POST(request) {
       enrolledIds:rows.map(r=>r.studentId),
       newStudentIds,state:"prepared",enrollmentCount:rows.length
     });
+    // Serialize academic-year changes so two admins cannot commit concurrently.
+    const systemRef=db.collection("settings").doc("system");
+    await db.runTransaction(async tx=>{
+      const live=await tx.get(systemRef);
+      const actualYear=String(live.exists ? (live.data().currentAcademicYear || fromYear) : fromYear);
+      if(actualYear!==fromYear)throw new Error("ROLLOVER_YEAR_CHANGED");
+      if(live.data()?.rolloverLock)throw new Error("ROLLOVER_IN_PROGRESS");
+      tx.set(systemRef,{currentAcademicYear:fromYear,rolloverLock:operationId},{merge:true});
+      tx.update(backupRef,{state:"in_progress",startedAt:new Date().toISOString()});
+    });
     const brandNew=new Set(newStudentIds);
     for (let i=0;i<rows.length;i+=200) {
       const batch=db.batch();
@@ -126,11 +138,16 @@ export async function POST(request) {
       for (const id of graduates.slice(i,i+400)) batch.set(db.collection("students").doc(id),{status:"graduated",graduatedYear:fromYear,rolloverId:operationId},{merge:true});
       await batch.commit();
     }
-    await db.collection("settings").doc("system").set({currentAcademicYear:toYear},{merge:true});
-    await backupRef.update({state:"committed",committedAt:new Date().toISOString()});
-    await db.collection("auditLogs").add({actorUid:admin.uid,action:"academic_year_rollover",fromYear,toYear,backupId:operationId,createdAt:new Date().toISOString()});
+    await db.runTransaction(async tx=>{
+      const system=await tx.get(systemRef);
+      if(system.data()?.rolloverLock!==operationId)throw new Error("ROLLOVER_LOCK_LOST");
+      tx.set(systemRef,{currentAcademicYear:toYear,rolloverLock:FieldValue.delete()},{merge:true});
+      tx.update(backupRef,{state:"committed",committedAt:new Date().toISOString()});
+    });
+    await db.collection("auditLogs").add({actorUid:admin.uid,action:"academic_year_rollover",fromYear,toYear,backupId:operationId,createdAt:new Date().toISOString()}).catch(()=>{});
     return NextResponse.json({ok:true,preview,backupId:operationId});
   } catch(e) {
+    if (["ROLLOVER_YEAR_CHANGED","ROLLOVER_IN_PROGRESS","ROLLOVER_LOCK_LOST"].includes(e.message)) return NextResponse.json({error:"ปีการศึกษาหรือสถานะการดำเนินการเปลี่ยนไป กรุณาตรวจสอบก่อน"},{status:409});
     if (e.message==="INVALID_ROWS") return NextResponse.json({error:"ไฟล์ปีการศึกษาใหม่มีข้อมูลผิดรูปแบบหรือรหัสซ้ำ"},{status:400});
     const x=staffError(e);return NextResponse.json({error:x.message},{status:x.status});
   }
