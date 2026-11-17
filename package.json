@@ -1,19 +1,20 @@
 {
   "name": "banhaed-school-system",
-  "version": "0.9.0",
+  "version": "1.0.0",
   "private": true,
   "scripts": {
     "dev": "next dev",
     "build": "next build",
-    "start": "next start"
+    "start": "next start",
+    "test": "node --test tests/*.test.mjs"
   },
   "dependencies": {
     "firebase": "^12.2.1",
-    "next": "^15.5.2",
-    "react": "^19.1.0",
-    "react-dom": "^19.1.0",
+    "next": "15.5.29",
+    "react": "19.3.1",
+    "react-dom": "19.3.1",
     "firebase-admin": "^13.4.0",
     "googleapis": "^160.0.0",
-    "xlsx": "^0.18.5"
+    "exceljs": "^4.4.0"
   }
 }

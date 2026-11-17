@@ -1,3 +1,11 @@
+import { NextResponse } from "next/server";
+import { getStudentSession } from "@/lib/studentSession";
 
-import { NextResponse } from "next/server"; import { cookies } from "next/headers"; import { getAdminDb } from "@/lib/firebaseAdmin"; import { COOKIE_NAME,readStudentSession } from "@/lib/studentAuth";
-export async function GET(){try{const c=await cookies(),s=readStudentSession(c.get(COOKIE_NAME)?.value);if(!s)return NextResponse.json({error:"unauthorized"},{status:401});const snap=await getAdminDb().collection("students").doc(s.studentId).get();if(!snap.exists)return NextResponse.json({error:"not found"},{status:404});const d=snap.data();delete d.auth;return NextResponse.json({student:{studentId:snap.id,...d}});}catch{return NextResponse.json({error:"unauthorized"},{status:401});}}
+export async function GET() {
+  try {
+    const session = await getStudentSession();
+    if (!session) return NextResponse.json({ error: "unauthorized" }, { status: 401 });
+    const { auth, ...data } = session.data;
+    return NextResponse.json({ student: { studentId: session.studentId, ...data, mustChangeLegacyPassword: auth.passwordVersion !== "custom" } }, {headers:{"Cache-Control":"private, no-store"}});
+  } catch { return NextResponse.json({ error: "unauthorized" }, { status: 401 }); }
+}

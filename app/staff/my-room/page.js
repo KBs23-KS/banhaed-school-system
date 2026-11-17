@@ -8,6 +8,7 @@ import SecureImage from "@/components/SecureImage";
 export default function MyRoomPage(){
   const [d,setD]=useState(null),[q,setQ]=useState(""),[status,setStatus]=useState(""),[sort,setSort]=useState("number");
   useEffect(()=>{staffFetch("/api/my-room").then(setD).catch(e=>setD({error:e.message,rooms:[],students:[]}))},[]);
+  async function download(){try{const blob=await staffFetch("/api/admin/export-students");const url=URL.createObjectURL(blob);const a=document.createElement("a");a.href=url;a.download="my-students.xlsx";a.click();URL.revokeObjectURL(url)}catch(e){alert(e.message||"ดาวน์โหลดไม่สำเร็จ")}}
   const students=d?.students||[];
   const rows=useMemo(()=>{
     let x=students.filter(s=>!q||[s.studentId,s.firstName,s.lastName,s.nickname].join(" ").toLowerCase().includes(q.toLowerCase()));
@@ -38,7 +39,7 @@ export default function MyRoomPage(){
       <div className="table-search"><UiIcon name="search" size={18}/><input value={q} onChange={e=>setQ(e.target.value)} placeholder="ค้นหาชื่อ หรือนักเรียน..."/></div>
       <select value={status} onChange={e=>setStatus(e.target.value)}><option value="">สถานะข้อมูลทั้งหมด</option><option value="complete">ครบถ้วน</option><option value="incomplete">ยังไม่ครบ</option><option value="not_started">ยังไม่เริ่ม</option></select>
       <select value={sort} onChange={e=>setSort(e.target.value)}><option value="number">เรียงตามเลขที่</option><option value="name">เรียงตามชื่อ</option></select>
-      <a className="toolbar-btn green" href={room?`/api/admin/export-students?grade=${encodeURIComponent(room.grade)}&room=${encodeURIComponent(room.room)}`:"/api/admin/export-students"}><UiIcon name="download" size={17}/>ส่งออก Excel</a><button className="toolbar-btn soft-print" onClick={()=>window.print()}><UiIcon name="file" size={17}/>พิมพ์รายชื่อ</button>
+      <button className="toolbar-btn green" onClick={download}><UiIcon name="download" size={17}/>ส่งออก Excel</button><button className="toolbar-btn soft-print" onClick={()=>window.print()}><UiIcon name="file" size={17}/>พิมพ์รายชื่อ</button>
     </section>
 
     <div className="room-main-grid">

@@ -1,5 +1,6 @@
 "use client";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
+import { changedStudentProfileFields } from "@/lib/studentProfile.mjs";
 import UiIcon from "@/components/UiIcon";
 import SecureImage from "@/components/SecureImage";
 import { compressSquareImage } from "@/lib/imageClient";
@@ -15,14 +16,28 @@ const tabs=[
 const empty={address:{registered:{},current:{}},family:{guardian:{},father:{},mother:{}},emergency:{primary:{},secondary:{}},additional:{},learning:{}};
 
 export default function StudentPage(){
-  const [s,setS]=useState(null),[tab,setTab]=useState("overview"),[msg,setMsg]=useState(""),[busy,setBusy]=useState(false),[menu,setMenu]=useState(false),[photoBusy,setPhotoBusy]=useState(false);
-  async function load(){const r=await fetch("/api/student/profile");if(!r.ok){location.href="/?login=student";return;}const d=await r.json();setS({...empty,...d.student,address:{registered:{},current:{},...(d.student.address||{})},family:{guardian:{},father:{},mother:{},...(d.student.family||{})},emergency:{primary:{},secondary:{},...(d.student.emergency||{})},additional:d.student.additional||{},learning:d.student.learning||{}})}
+  const savedProfileRef=useRef({});
+  const [pwd,setPwd]=useState({currentPassword:"",newPassword:"",confirm:""}); const [s,setS]=useState(null),[tab,setTab]=useState("overview"),[msg,setMsg]=useState(""),[busy,setBusy]=useState(false),[menu,setMenu]=useState(false),[photoBusy,setPhotoBusy]=useState(false);
+  async function load(){const r=await fetch("/api/student/profile");if(!r.ok){location.href="/?login=student";return;}const d=await r.json();savedProfileRef.current=d.student;setS({...empty,...d.student,address:{registered:{},current:{},...(d.student.address||{})},family:{guardian:{},father:{},mother:{},...(d.student.family||{})},emergency:{primary:{},secondary:{},...(d.student.emergency||{})},additional:d.student.additional||{},learning:d.student.learning||{}})}
   useEffect(()=>{load()},[]);
-  async function save(){setBusy(true);setMsg("");const r=await fetch("/api/student/profile",{method:"PATCH",headers:{"Content-Type":"application/json"},body:JSON.stringify(s)});const d=await r.json();setBusy(false);setMsg(r.ok?`บันทึกข้อมูลเรียบร้อย • ความครบถ้วน ${d.profileCompletion}%`:d.error||"บันทึกไม่สำเร็จ");if(r.ok)setS(v=>({...v,profileCompletion:d.profileCompletion,profileStatus:d.profileCompletion===100?"complete":"incomplete"}))}
+  async function save(){
+    const patch=changedStudentProfileFields(savedProfileRef.current,s);
+    if(!Object.keys(patch).length){setMsg("ยังไม่มีข้อมูลเปลี่ยนแปลง");return;}
+    setBusy(true);setMsg("");
+    try {
+      const r=await fetch("/api/student/profile",{method:"PATCH",headers:{"Content-Type":"application/json"},body:JSON.stringify(patch)});
+      const d=await r.json();
+      if(!r.ok)throw new Error(d.error||"บันทึกไม่สำเร็จ");
+      await load();
+      setMsg(`บันทึกข้อมูลเรียบร้อย • ความครบถ้วน ${d.profileCompletion}%`);
+    } catch(e){setMsg(e.message||"บันทึกข้อมูลไม่สำเร็จ");}
+    finally{setBusy(false);}
+  }
   function set(k,v){setS({...s,[k]:v})}
   function nested(section,k,v){setS({...s,[section]:{...(s[section]||{}),[k]:v}})}
   function deep(section,sub,k,v){setS({...s,[section]:{...(s[section]||{}),[sub]:{...(s[section]?.[sub]||{}),[k]:v}}})}
   async function uploadPhoto(file){if(!file)return;setPhotoBusy(true);setMsg("");try{const compressed=await compressSquareImage(file);const form=new FormData();form.append("file",compressed);form.append("kind","student_photo");const r=await fetch("/api/files/upload",{method:"POST",body:form});const d=await r.json();if(!r.ok)throw new Error(d.error);setS(v=>({...v,photoDocumentId:d.document.id}));setMsg("อัปเดตรูปประจำตัวแล้ว");}catch(e){setMsg(e.message||"อัปโหลดรูปไม่สำเร็จ")}finally{setPhotoBusy(false)}}
+  async function changePassword(e){ e.preventDefault(); if(pwd.newPassword!==pwd.confirm){setMsg("รหัสผ่านใหม่ไม่ตรงกัน");return;}setBusy(true);try{const r=await fetch("/api/student/password",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({currentPassword:pwd.currentPassword,newPassword:pwd.newPassword})});const d=await r.json();if(!r.ok)throw new Error(d.error);setS(v=>({...v,mustChangeLegacyPassword:false}));setPwd({currentPassword:"",newPassword:"",confirm:""});setMsg("เปลี่ยนรหัสผ่านเรียบร้อย");setTab("overview")}catch(e){setMsg(e.message||"เปลี่ยนรหัสผ่านไม่สำเร็จ")}finally{setBusy(false)}}
   if(!s)return <main className="screen-loader"><div className="loader-orb"/><p>กำลังโหลดข้อมูลของฉัน...</p></main>;
   const e=s.currentEnrollment||{};
   const name=`${s.prefix||""}${s.firstName||""} ${s.lastName||""}`.trim();
@@ -34,16 +49,18 @@ export default function StudentPage(){
       <div className="student-side-profile"><div className="student-side-avatar">{s.photoDocumentId?<SecureImage documentId={s.photoDocumentId} student alt="รูปนักเรียน"/>:(s.firstName?.[0]||"น")}</div><div><b>{name}</b><span>รหัส {s.studentId}</span></div></div>
       <nav>
         <button className={tab==="overview"?"active":""} onClick={()=>{setTab("overview");setMenu(false)}}><UiIcon name="home"/>หน้าหลัก</button>
+        <button className={tab==="password"?"active":""} onClick={()=>{setTab("password");setMenu(false)}}><UiIcon name="shield"/>เปลี่ยนรหัสผ่าน</button>
         {tabs.map(([key,label,icon])=><button key={key} className={tab===key?"active":""} onClick={()=>{setTab(key);setMenu(false)}}><UiIcon name={icon}/>{label}</button>)}
       </nav>
       <div className="student-progress-side"><div><span>ความครบถ้วน</span><b>{completion}%</b></div><div className="meter"><i style={{width:`${completion}%`}}/></div><small>ครบ {completedCount} จาก 6 หมวด</small></div>
       <button className="student-logout" onClick={async()=>{await fetch("/api/student/logout",{method:"POST"});location.href="/"}}><UiIcon name="logout"/>ออกจากระบบ</button>
     </aside>
     <section className="student-main">
-      <header className="student-topbar"><button className="student-menu-btn" onClick={()=>setMenu(v=>!v)}><UiIcon name="menu"/></button><div className="student-top-brand"><img src="/school-logo.png"/><div><b>โรงเรียนบ้านแฮดศึกษา</b><span>ระบบข้อมูลนักเรียน</span></div></div><div className="student-top-actions"><span><UiIcon name="calendar" size={16}/>ปีการศึกษา 2569</span><button><UiIcon name="bell" size={18}/></button></div></header>
+      <header className="student-topbar"><button className="student-menu-btn" onClick={()=>setMenu(v=>!v)}><UiIcon name="menu"/></button><div className="student-top-brand"><img src="/school-logo.png"/><div><b>โรงเรียนบ้านแฮดศึกษา</b><span>ระบบข้อมูลนักเรียน</span></div></div><div className="student-top-actions"><span><UiIcon name="calendar" size={16}/>ปีการศึกษา {s.currentEnrollment?.academicYear||"—"}</span></div></header>
       <div className="student-page-wrap">
         {msg&&<div className="toast-notice">{msg}<button onClick={()=>setMsg("")}>×</button></div>}
-        {tab==="overview"?<StudentOverview s={s} setTab={setTab} uploadPhoto={uploadPhoto} photoBusy={photoBusy}/>:<StudentForm tab={tab} s={s} set={set} nested={nested} deep={deep} save={save} busy={busy} setMsg={setMsg}/>} 
+        {s.mustChangeLegacyPassword&&<div className="form-error">บัญชีนี้ยังใช้รหัสผ่านเดิมที่เป็นวันเกิด กรุณาเปลี่ยนเป็นรหัสผ่านใหม่เพื่อความปลอดภัย <button onClick={()=>setTab("password")}>เปลี่ยนรหัสผ่าน</button></div>}
+        {tab==="password"?<section className="soft-form-card"><h2>เปลี่ยนรหัสผ่านของฉัน</h2><form className="stack-modern" onSubmit={changePassword}><label className="modern-field"><span>รหัสผ่านเดิม</span><input type="password" autoComplete="current-password" required value={pwd.currentPassword} onChange={e=>setPwd(v=>({...v,currentPassword:e.target.value}))}/></label><label className="modern-field"><span>รหัสผ่านใหม่ อย่างน้อย 10 ตัวอักษร มีตัวอักษรและตัวเลข</span><input type="password" autoComplete="new-password" minLength={10} required value={pwd.newPassword} onChange={e=>setPwd(v=>({...v,newPassword:e.target.value}))}/></label><label className="modern-field"><span>ยืนยันรหัสผ่านใหม่</span><input type="password" autoComplete="new-password" minLength={10} required value={pwd.confirm} onChange={e=>setPwd(v=>({...v,confirm:e.target.value}))}/></label><button className="soft-primary" disabled={busy}>บันทึกรหัสผ่านใหม่</button></form></section>:tab==="overview"?<StudentOverview s={s} setTab={setTab} uploadPhoto={uploadPhoto} photoBusy={photoBusy}/>:<StudentForm tab={tab} s={s} set={set} nested={nested} deep={deep} save={save} busy={busy} setMsg={setMsg}/>} 
       </div>
     </section>
     {menu&&<button className="student-backdrop" onClick={()=>setMenu(false)}/>}
@@ -65,7 +82,7 @@ function StudentOverview({s,setTab,uploadPhoto,photoBusy}){
       {cards.map(([key,label,icon,color])=>{const done=groupDone(key,s);return <button key={key} className={`student-category-card ${color}`} onClick={()=>setTab(key)}><span className="cat-icon"><UiIcon name={icon} size={25}/></span><span className="cat-copy"><b>{label}</b><small>{done?"ครบถ้วน 100%":"กรอกข้อมูลต่อ"}</small></span><i className={done?"done":"todo"}>{done?"✓":"→"}</i></button>})}
     </section>
     <div className="student-overview-grid">
-      <section className="student-news-card"><div className="section-title-row"><div><small>ANNOUNCEMENTS</small><h2>ข่าวประชาสัมพันธ์</h2></div><span>อัปเดตล่าสุด</span></div><div className="news-list"><article><i>1</i><div><b>เปิดตรวจสอบข้อมูลนักเรียน ปีการศึกษา 2569</b><span>กรุณาตรวจสอบข้อมูลส่วนตัวให้ครบถ้วน</span></div><time>19 ก.ย.</time></article><article><i>2</i><div><b>ประชาสัมพันธ์กิจกรรมของโรงเรียน</b><span>ติดตามข่าวสารและกิจกรรมผ่านระบบนี้</span></div><time>16 ก.ย.</time></article><article><i>3</i><div><b>ตรวจสอบเบอร์ติดต่อฉุกเฉิน</b><span>เพื่อให้ครูติดต่อผู้ปกครองได้อย่างรวดเร็ว</span></div><time>12 ก.ย.</time></article></div></section>
+      <section className="student-news-card"><div className="section-title-row"><div><small>PROFILE GUIDE</small><h2>คำแนะนำการใช้งาน</h2></div><span>ข้อมูลที่ควรตรวจสอบ</span></div><div className="news-list"><article><i>1</i><div><b>ตรวจสอบข้อมูลส่วนตัว</b><span>กรุณาตรวจสอบชื่อ วันเกิด และข้อมูลติดต่อให้ถูกต้อง</span></div></article><article><i>2</i><div><b>ตรวจสอบข้อมูลผู้ปกครอง</b><span>ระบุชื่อและเบอร์โทรของผู้ปกครองเพื่อให้โรงเรียนติดต่อได้</span></div></article><article><i>3</i><div><b>ตรวจสอบผู้ติดต่อฉุกเฉิน</b><span>ระบุเบอร์โทรที่สามารถติดต่อได้จริงเมื่อจำเป็น</span></div></article></div></section>
       <section className="student-progress-card"><div className="section-title-row"><div><small>PROFILE PROGRESS</small><h2>ความครบถ้วนของข้อมูล</h2></div></div><div className="big-progress"><div className="progress-ring" style={{"--progress":completion}}><span>{completion}%</span></div><div><b>{completion===100?"ยอดเยี่ยม! ข้อมูลครบแล้ว":"ตรวจสอบข้อมูลให้ครบถ้วน"}</b><p>ข้อมูลที่ครบช่วยให้ครูดูแลและติดต่อคุณได้สะดวกขึ้น</p><button onClick={()=>setTab("personal")}>ตรวจสอบข้อมูล →</button></div></div></section>
     </div>
   </>
@@ -92,7 +109,7 @@ function SelectField({label,value,onChange,options=[]}){return <label className=
 function TextAreaField({label,value,onChange,placeholder=""}){return <label className="modern-field wide"><span>{label}</span><textarea rows={4} value={value||""} placeholder={placeholder} onChange={e=>onChange(e.target.value)}/></label>}
 function groupDone(key,s){
   if(key==="personal")return !!(s.citizenId&&s.nickname&&s.birthDateBE&&s.gender&&(s.phone||s.noPhone));
-  if(key==="address")return !!(s.address?.registered?.houseNo&&s.address?.registered?.district&&s.address?.registered?.province&&s.address?.travelMethod);
+  if(key==="address")return !!(s.address?.registered?.houseNo&&s.address?.registered?.subdistrict&&s.address?.registered?.district&&s.address?.registered?.province&&s.address?.travelMethod);
   if(key==="family")return !!(s.family?.guardian?.name&&s.family?.guardian?.phone);
   if(key==="emergency")return !!(s.emergency?.primary?.name&&s.emergency?.primary?.phone);
   if(key==="additional")return !!s.additional?.abilities;

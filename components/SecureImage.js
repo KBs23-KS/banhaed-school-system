@@ -18,7 +18,7 @@ export default function SecureImage({ documentId, alt="", className="", student=
       }catch{}
     }
     let off=()=>{};
-    if(student)load(null); else off=onAuthStateChanged(auth,user=>load(user));
+    if(student)load(null); else if(auth)off=onAuthStateChanged(auth,user=>load(user));
     return()=>{cancelled=true;off();if(objectUrl)URL.revokeObjectURL(objectUrl)};
   },[documentId,student]);
   return src?<img src={src} alt={alt} className={className}/>:null;

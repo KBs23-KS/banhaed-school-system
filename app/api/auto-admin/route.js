@@ -1,135 +1,46 @@
+import crypto from "crypto";
 import { NextResponse } from "next/server";
 import { getAdminAuth, getAdminDb } from "@/lib/firebaseAdmin";
+import { checkLoginLimit, markLoginFailure, clearLoginFailures, verifyRequestOrigin } from "@/lib/studentSecurity";
 
-const ADMIN_USERNAME = "admin";
-const ADMIN_EMAIL = `${ADMIN_USERNAME}@banhaed.local`;
-const ADMIN_ALIASES = [
-  ADMIN_EMAIL,
-  `${ADMIN_USERNAME}@banhaed.ac.th`,
-];
+const respond=(message,status)=>NextResponse.json({error:message},{status});
 
-export async function POST(request) {
-  try {
-    const body = await request.json();
-    const rawUsername = String(body.username || "").trim().toLowerCase();
-    const username = rawUsername.split("@")[0];
-
-    // Treat admin@... as the same Admin account as "admin".
-    if (username !== ADMIN_USERNAME) {
-      return NextResponse.json({ ok: true, skipped: true });
+// This endpoint must never reset passwords, reassign roles or repair existing Admins on login.
+// Existing accounts authenticate directly via Firebase Authentication on the client.
+export async function POST(request){
+  try{
+    if(!verifyRequestOrigin(request))return respond("Invalid request",403);
+    if(process.env.ENABLE_AUTO_ADMIN_BOOTSTRAP!=="true")return respond("การสร้าง Admin อัตโนมัติถูกปิด กรุณาใช้การตั้งค่าครั้งแรกตามคู่มือ",410);
+    const expected=process.env.ADMIN_PASSWORD;
+    if(typeof expected!=="string" || expected.length<12)return respond("ยังไม่ได้ตั้ง ADMIN_PASSWORD ให้ปลอดภัย",503);
+    const body=await request.json();
+    if(String(body.username||"").split("@")[0].toLowerCase()!=="admin")return respond("ชื่อผู้ใช้ไม่ถูกต้อง",400);
+    await checkLoginLimit("admin","autoAdmin");
+    const pwd=String(body.password||"");
+    const actual=crypto.createHash("sha256").update(pwd).digest();
+    const expectedHash=crypto.createHash("sha256").update(expected).digest();
+    if(!crypto.timingSafeEqual(actual,expectedHash)){
+      await markLoginFailure("admin","autoAdmin");
+      return respond("รหัสผ่านไม่ถูกต้อง",401);
     }
-
-    const expectedPassword = process.env.ADMIN_PASSWORD;
-    if (!expectedPassword) {
-      return NextResponse.json(
-        { error: "ยังไม่ได้ตั้ง ADMIN_PASSWORD ใน Vercel" },
-        { status: 503 }
-      );
+    const db=getAdminDb(),auth=getAdminAuth();
+    const admins=await db.collection("users").where("roles","array-contains","admin").limit(1).get();
+    if(!admins.empty)return respond("มีบัญชี Admin อยู่แล้ว ไม่อนุญาตให้สร้างหรือเปลี่ยนรหัสอัตโนมัติ",409);
+    const email="admin@banhaed.local";
+    try{await auth.getUserByEmail(email);return respond("มีบัญชี Firebase อยู่แล้ว กรุณาตรวจสอบบัญชีเดิม",409);}
+    catch(e){if(e?.code!=="auth/user-not-found")throw e;}
+    const user=await auth.createUser({email,password:expected,displayName:process.env.ADMIN_DISPLAY_NAME||"ผู้ดูแลระบบ"});
+    try{
+      await db.collection("users").doc(user.uid).set({username:"admin",email,displayName:process.env.ADMIN_DISPLAY_NAME||"ผู้ดูแลระบบ",roles:["teacher","hr","admin"],homerooms:[],status:"active",createdAt:new Date().toISOString()});
+      await db.collection("auditLogs").add({actorUid:user.uid,action:"first_admin_bootstrap",createdAt:new Date().toISOString()});
+    }catch(e){
+      await auth.deleteUser(user.uid).catch(()=>{});
+      throw e;
     }
-
-    const password = String(body.password || "");
-    if (password !== expectedPassword) {
-      return NextResponse.json({ error: "รหัสผ่าน Admin ไม่ถูกต้อง" }, { status: 401 });
-    }
-
-    const displayName = process.env.ADMIN_DISPLAY_NAME || "ผู้ดูแลระบบ";
-    const adminAuth = getAdminAuth();
-    const db = getAdminDb();
-
-    // First, use an existing Firestore admin profile when one exists.
-    // This preserves its Firebase Auth UID and existing email alias.
-    const adminProfiles = await db
-      .collection("users")
-      .where("roles", "array-contains", "admin")
-      .limit(1)
-      .get();
-
-    let user = null;
-
-    if (!adminProfiles.empty) {
-      const adminDoc = adminProfiles.docs[0];
-      try {
-        user = await adminAuth.getUser(adminDoc.id);
-      } catch (error) {
-        if (error?.code !== "auth/user-not-found") throw error;
-      }
-
-      if (!user) {
-        // The profile exists but its Auth user does not. Reuse an existing
-        // known alias if available, otherwise create the canonical account.
-        for (const email of ADMIN_ALIASES) {
-          try {
-            user = await adminAuth.getUserByEmail(email);
-            break;
-          } catch (error) {
-            if (error?.code !== "auth/user-not-found") throw error;
-          }
-        }
-      }
-    }
-
-    // No usable existing admin profile/Auth user: locate an existing admin
-    // alias before creating a new account.
-    if (!user) {
-      for (const email of ADMIN_ALIASES) {
-        try {
-          user = await adminAuth.getUserByEmail(email);
-          break;
-        } catch (error) {
-          if (error?.code !== "auth/user-not-found") throw error;
-        }
-      }
-    }
-
-    if (!user) {
-      user = await adminAuth.createUser({
-        email: ADMIN_EMAIL,
-        password: expectedPassword,
-        displayName,
-        disabled: false,
-      });
-    } else {
-      user = await adminAuth.updateUser(user.uid, {
-        password: expectedPassword,
-        displayName,
-        disabled: false,
-      });
-    }
-
-    const now = new Date().toISOString();
-    const existingData = adminProfiles.empty ? {} : adminProfiles.docs[0].data();
-    await db.collection("users").doc(user.uid).set(
-      {
-        username: ADMIN_USERNAME,
-        email: user.email || ADMIN_EMAIL,
-        displayName,
-        roles: ["teacher", "hr", "admin"],
-        homerooms: Array.isArray(existingData.homerooms) ? existingData.homerooms : [],
-        status: "active",
-        createdAt: existingData.createdAt || now,
-        updatedAt: now,
-        autoBootstrap: true,
-      },
-      { merge: true }
-    );
-
-    await db.collection("settings").doc("system").set(
-      { currentAcademicYear: "2569" },
-      { merge: true }
-    );
-
-    return NextResponse.json({
-      ok: true,
-      created: !existingData || adminProfiles.empty,
-      repaired: true,
-      username: ADMIN_USERNAME,
-      loginEmail: user.email || ADMIN_EMAIL,
-    });
-  } catch (error) {
-    console.error("auto-admin error", error);
-    return NextResponse.json(
-      { error: error?.message || "ไม่สามารถเตรียมบัญชี Admin ได้" },
-      { status: 500 }
-    );
+    await clearLoginFailures("admin","autoAdmin");
+    return NextResponse.json({ok:true,loginEmail:email});
+  }catch(e){
+    if(e?.message==="RATE_LIMITED")return respond("ลองใหม่อีกครั้งใน 15 นาที",429);
+    return respond("ไม่สามารถดำเนินการได้",500);
   }
 }

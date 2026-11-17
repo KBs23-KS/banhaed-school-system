@@ -1,2 +1,13 @@
+import { NextResponse } from "next/server";
+import { requireStaff, staffError } from "@/lib/staffAuth";
+import { toStaffPublicProfile } from "@/lib/staffView.mjs";
 
-import { NextResponse } from "next/server"; import { requireStaff,staffError } from "@/lib/staffAuth"; export async function GET(request){try{return NextResponse.json({user:await requireStaff(request)});}catch(e){const x=staffError(e);return NextResponse.json({error:x.message},{status:x.status});}}
+export async function GET(request) {
+  try {
+    const user = await requireStaff(request);
+    return NextResponse.json({ user: toStaffPublicProfile(user) }, {headers:{"Cache-Control":"private, no-store"}});
+  } catch (error) {
+    const x = staffError(error);
+    return NextResponse.json({ error: x.message }, { status: x.status });
+  }
+}

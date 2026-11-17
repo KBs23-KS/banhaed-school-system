@@ -1,5 +1,6 @@
 "use client";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
+import { changedStudentProfileFields } from "@/lib/studentProfile.mjs";
 import StaffShell from "@/components/StaffShell";
 import { staffFetch } from "@/lib/apiClient";
 import UiIcon from "@/components/UiIcon";
@@ -10,9 +11,19 @@ const tabs=[
 ];
 
 export default function StudentDetail({params}){
+ const savedProfileRef=useRef({});
  const [id,setId]=useState(""),[s,setS]=useState(null),[canEdit,setCanEdit]=useState(false),[edit,setEdit]=useState(false),[tab,setTab]=useState("personal"),[msg,setMsg]=useState("");
- useEffect(()=>{Promise.resolve(params).then(p=>{setId(p.id);staffFetch(`/api/students/${p.id}`).then(d=>{setS(d.student);setCanEdit(d.canEdit);setEdit(new URLSearchParams(location.search).get("edit")==="1"&&d.canEdit)}).catch(e=>setMsg(e.message))})},[params]);
- async function save(){try{await staffFetch(`/api/students/${id}`,{method:"PATCH",body:JSON.stringify(s)});setMsg("บันทึกข้อมูลแล้ว");setEdit(false)}catch(e){setMsg(e.message)}}
+ useEffect(()=>{Promise.resolve(params).then(p=>{setId(p.id);staffFetch(`/api/students/${p.id}`).then(d=>{savedProfileRef.current=d.student;setS(d.student);setCanEdit(d.canEdit);setEdit(new URLSearchParams(location.search).get("edit")==="1"&&d.canEdit)}).catch(e=>setMsg(e.message))})},[params]);
+ async function save(){
+   const patch=changedStudentProfileFields(savedProfileRef.current,s);
+   if(!Object.keys(patch).length){setMsg("ยังไม่มีข้อมูลเปลี่ยนแปลง");setEdit(false);return;}
+   try {
+     await staffFetch(`/api/students/${id}`,{method:"PATCH",body:JSON.stringify(patch)});
+     const fresh=await staffFetch(`/api/students/${id}`);
+     savedProfileRef.current=fresh.student;setS(fresh.student);setCanEdit(fresh.canEdit);
+     setMsg("บันทึกข้อมูลแล้ว");setEdit(false);
+   }catch(e){setMsg(e.message||"บันทึกไม่สำเร็จ")}
+ }
  function set(k,v){setS({...s,[k]:v})}
  function nested(section,k,v){setS({...s,[section]:{...(s[section]||{}),[k]:v}})}
  function deep(section,sub,k,v){setS({...s,[section]:{...(s[section]||{}),[sub]:{...(s[section]?.[sub]||{}),[k]:v}}})}

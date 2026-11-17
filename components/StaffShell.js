@@ -2,19 +2,23 @@
 import { useEffect, useState } from "react";
 import { signOut } from "firebase/auth";
 import { usePathname } from "next/navigation";
-import { auth } from "@/lib/firebase";
+import { auth, firebasePreviewLocked } from "@/lib/firebase";
 import { staffFetch } from "@/lib/apiClient";
 import UiIcon from "@/components/UiIcon";
 
 export default function StaffShell({ children, title = "" }) {
   const [profile, setProfile] = useState(null);
+  const [year,setYear]=useState("—");
+  const [search,setSearch]=useState("");
   const [loading, setLoading] = useState(true);
+  const [accessError,setAccessError] = useState("");
   const [open, setOpen] = useState(false);
   const pathname = usePathname();
 
   useEffect(() => {
     let cancelled = false;
     async function checkAuth() {
+      if(firebasePreviewLocked || !auth){if(!cancelled){setAccessError("ระบบ Preview ยังไม่ได้เชื่อม Firebase สำหรับทดสอบ");setLoading(false);}return;}
       try {
         if (typeof auth.authStateReady === "function") await auth.authStateReady();
       } catch {}
@@ -28,10 +32,12 @@ export default function StaffShell({ children, title = "" }) {
       try {
         const d = await staffFetch("/api/staff/me");
         if (!cancelled) setProfile(d.user);
-      } catch {
+        staffFetch("/api/dashboard").then(d=>{if(!cancelled)setYear(d.currentAcademicYear||"—")}).catch(()=>{});
+      } catch(error) {
         if (!cancelled) {
           setLoading(false);
-          location.href = "/?login=staff";
+          if(error?.status===401 || error?.message==="NO_AUTH") location.href="/?login=staff";
+          else setAccessError(error?.status===403 ? "บัญชีนี้ไม่ได้รับสิทธิ์ใช้งานระบบ" : "เชื่อมต่อระบบข้อมูลโรงเรียนไม่สำเร็จ กรุณาแจ้งผู้ดูแลตรวจสอบ Firebase Admin และ Vercel Environment Variables");
         }
         return;
       }
@@ -42,6 +48,7 @@ export default function StaffShell({ children, title = "" }) {
   }, []);
 
   if (loading) return <main className="screen-loader"><div className="loader-orb"/><p>กำลังตรวจสอบสิทธิ์ผู้ใช้งาน...</p></main>;
+  if(accessError)return <main className="screen-loader"><div className="form-error" role="alert">{accessError}</div><button className="soft-primary" onClick={()=>location.reload()}>ลองเชื่อมต่อใหม่</button><button className="soft-secondary" onClick={()=>signOut(auth).then(()=>location.href="/?login=staff")}>ออกจากระบบ</button></main>;
 
   const roles = profile?.roles || [];
   const studentNav = [
@@ -96,10 +103,10 @@ export default function StaffShell({ children, title = "" }) {
       <section className="staff-content">
         <header className="staff-topbar">
           <button className="sidebar-toggle" onClick={()=>setOpen(v=>!v)} aria-label="เปิดเมนู"><UiIcon name="menu"/></button>
-          <div className="staff-topbar-search"><UiIcon name="search" size={18}/><input placeholder="ค้นหานักเรียน บุคลากร หรือเมนู..."/></div>
+          <div className="staff-topbar-search"><UiIcon name="search" size={18}/><input value={search} onChange={e=>setSearch(e.target.value)} onKeyDown={e=>{if(e.key==="Enter"&&search.trim())location.href="/staff/students?q="+encodeURIComponent(search.trim())}} placeholder="ค้นหานักเรียน (กด Enter)..."/></div>
           <div className="staff-top-actions">
-            <span className="year-pill"><UiIcon name="calendar" size={16}/>ปีการศึกษา 2569</span>
-            <button className="icon-btn" aria-label="การแจ้งเตือน"><UiIcon name="bell" size={19}/><i>3</i></button>
+            <span className="year-pill"><UiIcon name="calendar" size={16}/>ปีการศึกษา {year}</span>
+            
             <div className="top-profile"><div className="top-avatar">{(profile?.displayName || "ค").slice(0,1)}</div><div><b>{profile?.displayName || "ผู้ใช้งาน"}</b><span>{roleLabel}</span></div></div>
           </div>
         </header>
