@@ -6,7 +6,8 @@ import UiIcon from "@/components/UiIcon";
 
 export default function StaffDashboard(){
   const [d,setD]=useState(null);
-  useEffect(()=>{staffFetch("/api/dashboard").then(setD).catch(()=>setD({counts:{},currentAcademicYear:"2569"}))},[]);
+  const [health,setHealth]=useState(null);
+  useEffect(()=>{staffFetch("/api/dashboard").then(setD).catch(()=>setD({counts:{}}));staffFetch("/api/health").then(setHealth).catch(()=>setHealth(null))},[]);
   const counts=d?.counts||{};
   const cards=[
     ["ห้องเรียนที่ปรึกษา",counts.myRoom??"—","ห้องของฉัน","room","blue"],
@@ -38,12 +39,12 @@ export default function StaffDashboard(){
       </article>
 
       <article className="dashboard-panel system-panel">
-        <div className="panel-heading"><div><small>SYSTEM STATUS</small><h2>สถานะการเชื่อมต่อ</h2></div><span className="connected-pill">● พร้อมใช้งาน</span></div>
+        <div className="panel-heading"><div><small>SYSTEM STATUS</small><h2>สถานะการเชื่อมต่อ</h2></div><span className="connected-pill">{health?.firestore==="connected"?"● เชื่อมต่อฐานข้อมูลแล้ว":"● ยังไม่ได้ยืนยัน"}</span></div>
         <div className="system-health">
-          <div><span><UiIcon name="shield"/></span><div><b>Firebase Authentication</b><small>บัญชีครูและบุคลากร</small></div><i>พร้อม</i></div>
-          <div><span><UiIcon name="cloud"/></span><div><b>Cloud Firestore</b><small>ฐานข้อมูลหลักของระบบ</small></div><i>พร้อม</i></div>
-          <div><span><UiIcon name="folder"/></span><div><b>Google Drive</b><small>รูปภาพและเอกสาร</small></div><i>ตั้งค่าใน Vercel</i></div>
-          <div><span><UiIcon name="file"/></span><div><b>Excel Import / Export</b><small>รองรับไฟล์ .xlsx</small></div><i>พร้อม</i></div>
+          <div><span><UiIcon name="shield"/></span><div><b>Firebase Authentication</b><small>บัญชีครูและบุคลากร</small></div><i>{health?.authentication==="verified"?"ตรวจสอบแล้ว":"ยังไม่ได้ตรวจ"}</i></div>
+          <div><span><UiIcon name="cloud"/></span><div><b>Cloud Firestore</b><small>ฐานข้อมูลหลักของระบบ</small></div><i>{health?.firestore==="connected"?"เชื่อมต่อแล้ว":"ยังไม่ได้ตรวจ"}</i></div>
+          <div><span><UiIcon name="folder"/></span><div><b>Google Drive</b><small>รูปภาพและเอกสาร</small></div><i>{health?.driveConfigured?"กำหนดค่าแล้ว (ยังไม่ทดสอบสิทธิ์)":"ยังไม่พบการตั้งค่า"}</i></div>
+          <div><span><UiIcon name="file"/></span><div><b>Excel Import / Export</b><small>รองรับไฟล์ .xlsx</small></div><i>รองรับ .xlsx</i></div>
         </div>
       </article>
     </section>

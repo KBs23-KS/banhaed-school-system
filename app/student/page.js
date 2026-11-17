@@ -42,7 +42,7 @@ export default function StudentPage(){
       <button className="student-logout" onClick={async()=>{await fetch("/api/student/logout",{method:"POST"});location.href="/"}}><UiIcon name="logout"/>ออกจากระบบ</button>
     </aside>
     <section className="student-main">
-      <header className="student-topbar"><button className="student-menu-btn" onClick={()=>setMenu(v=>!v)}><UiIcon name="menu"/></button><div className="student-top-brand"><img src="/school-logo.png"/><div><b>โรงเรียนบ้านแฮดศึกษา</b><span>ระบบข้อมูลนักเรียน</span></div></div><div className="student-top-actions"><span><UiIcon name="calendar" size={16}/>ปีการศึกษา 2569</span><button><UiIcon name="bell" size={18}/></button></div></header>
+      <header className="student-topbar"><button className="student-menu-btn" onClick={()=>setMenu(v=>!v)}><UiIcon name="menu"/></button><div className="student-top-brand"><img src="/school-logo.png"/><div><b>โรงเรียนบ้านแฮดศึกษา</b><span>ระบบข้อมูลนักเรียน</span></div></div><div className="student-top-actions"><span><UiIcon name="calendar" size={16}/>ปีการศึกษา {s.currentEnrollment?.academicYear||"—"}</span><button><UiIcon name="bell" size={18}/></button></div></header>
       <div className="student-page-wrap">
         {msg&&<div className="toast-notice">{msg}<button onClick={()=>setMsg("")}>×</button></div>}
         {s.mustChangeLegacyPassword&&<div className="form-error">บัญชีนี้ยังใช้รหัสผ่านเดิมที่เป็นวันเกิด กรุณาเปลี่ยนเป็นรหัสผ่านใหม่เพื่อความปลอดภัย <button onClick={()=>setTab("password")}>เปลี่ยนรหัสผ่าน</button></div>}

@@ -8,6 +8,8 @@ import UiIcon from "@/components/UiIcon";
 
 export default function StaffShell({ children, title = "" }) {
   const [profile, setProfile] = useState(null);
+  const [year,setYear]=useState("—");
+  const [search,setSearch]=useState("");
   const [loading, setLoading] = useState(true);
   const [open, setOpen] = useState(false);
   const pathname = usePathname();
@@ -28,6 +30,7 @@ export default function StaffShell({ children, title = "" }) {
       try {
         const d = await staffFetch("/api/staff/me");
         if (!cancelled) setProfile(d.user);
+        staffFetch("/api/dashboard").then(d=>{if(!cancelled)setYear(d.currentAcademicYear||"—")}).catch(()=>{});
       } catch {
         if (!cancelled) {
           setLoading(false);
@@ -96,10 +99,10 @@ export default function StaffShell({ children, title = "" }) {
       <section className="staff-content">
         <header className="staff-topbar">
           <button className="sidebar-toggle" onClick={()=>setOpen(v=>!v)} aria-label="เปิดเมนู"><UiIcon name="menu"/></button>
-          <div className="staff-topbar-search"><UiIcon name="search" size={18}/><input placeholder="ค้นหานักเรียน บุคลากร หรือเมนู..."/></div>
+          <div className="staff-topbar-search"><UiIcon name="search" size={18}/><input value={search} onChange={e=>setSearch(e.target.value)} onKeyDown={e=>{if(e.key==="Enter"&&search.trim())location.href="/staff/students?q="+encodeURIComponent(search.trim())}} placeholder="ค้นหานักเรียน (กด Enter)..."/></div>
           <div className="staff-top-actions">
-            <span className="year-pill"><UiIcon name="calendar" size={16}/>ปีการศึกษา 2569</span>
-            <button className="icon-btn" aria-label="การแจ้งเตือน"><UiIcon name="bell" size={19}/><i>3</i></button>
+            <span className="year-pill"><UiIcon name="calendar" size={16}/>ปีการศึกษา {year}</span>
+            
             <div className="top-profile"><div className="top-avatar">{(profile?.displayName || "ค").slice(0,1)}</div><div><b>{profile?.displayName || "ผู้ใช้งาน"}</b><span>{roleLabel}</span></div></div>
           </div>
         </header>

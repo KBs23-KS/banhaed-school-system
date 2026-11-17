@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { getAdminAuth, getAdminDb } from "@/lib/firebaseAdmin";
+import {checkLoginLimit,markLoginFailure,clearLoginFailures,verifyRequestOrigin} from "@/lib/studentSecurity";
 
 const ADMIN_USERNAME = "admin";
 const ADMIN_EMAIL = `${ADMIN_USERNAME}@banhaed.local`;
@@ -10,6 +11,7 @@ const ADMIN_ALIASES = [
 
 export async function POST(request) {
   try {
+    if(!verifyRequestOrigin(request))return NextResponse.json({error:"Invalid request"},{status:403});
     const body = await request.json();
     const rawUsername = String(body.username || "").trim().toLowerCase();
     const username = rawUsername.split("@")[0];
@@ -19,6 +21,7 @@ export async function POST(request) {
       return NextResponse.json({ ok: true, skipped: true });
     }
 
+    await checkLoginLimit("admin","autoAdmin");
     const expectedPassword = process.env.ADMIN_PASSWORD;
     if (!expectedPassword) {
       return NextResponse.json(
@@ -29,8 +32,10 @@ export async function POST(request) {
 
     const password = String(body.password || "");
     if (password !== expectedPassword) {
+      await markLoginFailure("admin","autoAdmin");
       return NextResponse.json({ error: "รหัสผ่าน Admin ไม่ถูกต้อง" }, { status: 401 });
     }
+    await clearLoginFailures("admin","autoAdmin");
 
     const displayName = process.env.ADMIN_DISPLAY_NAME || "ผู้ดูแลระบบ";
     const adminAuth = getAdminAuth();
@@ -122,6 +127,7 @@ export async function POST(request) {
       loginEmail: user.email || ADMIN_EMAIL,
     });
   } catch (error) {
+    if(error.message==="RATE_LIMITED")return NextResponse.json({error:"ลองใหม่อีกครั้งใน 15 นาที"},{status:429});
     console.error("auto-admin error", error);
     return NextResponse.json(
       { error: error?.message || "ไม่สามารถเตรียมบัญชี Admin ได้" },
