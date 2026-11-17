@@ -1,7 +1,7 @@
 "use client";
 import { useEffect, useState } from "react";
 import { signInWithEmailAndPassword } from "firebase/auth";
-import { auth } from "@/lib/firebase";
+import { auth, firebasePreviewLocked } from "@/lib/firebase";
 import UiIcon from "@/components/UiIcon";
 
 function SchoolBrand({compact=false}){
@@ -45,7 +45,7 @@ function StudentLogin({onBack}) {
   const [error, setError] = useState("");
 
   async function lookup(event) {
-    event.preventDefault(); setLoading(true); setError("");
+    event.preventDefault(); if(firebasePreviewLocked){setError("Preview ยังไม่ได้เชื่อม Firebase สำหรับทดสอบ กรุณาติดต่อผู้ดูแลระบบ");return;} setLoading(true); setError("");
     try {
       const r = await fetch("/api/student/lookup", {method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({studentId})});
       const data = await r.json();
@@ -56,7 +56,7 @@ function StudentLogin({onBack}) {
   }
 
   async function authenticate(event) {
-    event.preventDefault(); setLoading(true); setError("");
+    event.preventDefault(); if(firebasePreviewLocked){setError("ระบบทดสอบยังไม่พร้อมใช้งาน");return;} setLoading(true); setError("");
     try {
       if (step === "activate" && password !== confirmPassword) throw new Error("รหัสผ่านสองช่องไม่ตรงกัน");
       const endpoint = step === "activate" ? "/api/student/activate" : "/api/student/login";
@@ -94,7 +94,7 @@ function StaffLogin({onBack}){
   const [loading,setLoading]=useState(false);
   const [error,setError]=useState("");
   async function submit(e){
-    e.preventDefault();setLoading(true);setError("");
+    e.preventDefault();if(firebasePreviewLocked){setError("Preview ยังไม่ได้เชื่อม Firebase สำหรับทดสอบ");return;}setLoading(true);setError("");
     try {
       const entered=username.trim().toLowerCase();
       const normalized=entered.split("@")[0];
@@ -137,6 +137,7 @@ export default function Home(){
   return <main className="bh-home">
     <div className="bh-home-bg" aria-hidden="true"/>
     <div className="bh-home-tint" aria-hidden="true"/>
+    {firebasePreviewLocked && <div role="status" className="form-error" style={{position:"relative",zIndex:3,margin:"12px auto",maxWidth:760,textAlign:"center"}}>เว็บไซต์เวอร์ชันทดสอบ: ยังไม่ตั้งค่า Firebase สำหรับทดสอบ การเข้าสู่ระบบถูกปิดเพื่อความปลอดภัย</div>}
 
     <section className="bh-home-main">
       <header className="bh-home-heading">

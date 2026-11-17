@@ -2,7 +2,7 @@
 import { useEffect, useState } from "react";
 import { signOut } from "firebase/auth";
 import { usePathname } from "next/navigation";
-import { auth } from "@/lib/firebase";
+import { auth, firebasePreviewLocked } from "@/lib/firebase";
 import { staffFetch } from "@/lib/apiClient";
 import UiIcon from "@/components/UiIcon";
 
@@ -18,6 +18,7 @@ export default function StaffShell({ children, title = "" }) {
   useEffect(() => {
     let cancelled = false;
     async function checkAuth() {
+      if(firebasePreviewLocked || !auth){if(!cancelled){setAccessError("ระบบ Preview ยังไม่ได้เชื่อม Firebase สำหรับทดสอบ");setLoading(false);}return;}
       try {
         if (typeof auth.authStateReady === "function") await auth.authStateReady();
       } catch {}
