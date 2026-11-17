@@ -7,6 +7,6 @@ export async function GET(request) {
   try {
     await requireStaff(request, ["teacher","hr","admin"]);
     await getAdminDb().collection("settings").doc("system").get();
-    return NextResponse.json({ authentication: "verified", firestore: "connected", driveConfigured: driveReady() });
+    return NextResponse.json({ authentication: "verified", firestore: "connected", projectId: process.env.FIREBASE_PROJECT_ID || null, driveConfigured: driveReady() }, { headers: { "Cache-Control": "no-store" } });
   } catch(e) {const x=staffError(e);return NextResponse.json({error:x.message},{status:x.status});}
 }

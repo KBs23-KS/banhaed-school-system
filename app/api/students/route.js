@@ -36,14 +36,43 @@ export async function POST(request) {
     const admin = await requireStaff(request, ["admin"]);
     const body = await request.json();
     const studentId = String(body.studentId || "").trim();
-    if (!/^[0-9A-Za-z-]{1,32}$/.test(studentId)) return NextResponse.json({ error: "รหัสนักเรียนไม่ถูกต้อง" }, { status: 400 });
+    const firstName = String(body.firstName || "").trim().slice(0,100);
+    const lastName = String(body.lastName || "").trim().slice(0,100);
+    if (!/^[0-9A-Za-z-]{1,32}$/.test(studentId) || !firstName || !lastName)
+      return NextResponse.json({ error: "รหัส ชื่อ หรือนามสกุลไม่ถูกต้อง" }, { status: 400 });
     const settings = await getSystemSettings();
+    if (settings.rolloverLock) return NextResponse.json({ error: "กำลังเปลี่ยนปีการศึกษา กรุณาลองใหม่ภายหลัง" }, { status: 409 });
     const enrollment = normalizeEnrollment(body, settings.currentAcademicYear);
-    if (!/^[1-6]$/.test(enrollment.grade) || !enrollment.room) return NextResponse.json({ error: "ชั้นหรือห้องไม่ถูกต้อง" }, { status: 400 });
+    if (!/^[1-6]$/.test(enrollment.grade) || !/^[0-9]{1,3}$/.test(enrollment.room) ||
+        enrollment.academicYear !== String(settings.currentAcademicYear) ||
+        (enrollment.number !== null && (!Number.isInteger(enrollment.number) || enrollment.number < 0 || enrollment.number > 1000)))
+      return NextResponse.json({ error: "ชั้น ห้อง เลขที่ หรือปีการศึกษาไม่ถูกต้อง" }, { status: 400 });
+
     const db = getAdminDb(), ref = db.collection("students").doc(studentId);
-    if ((await ref.get()).exists) return NextResponse.json({ error: "มีรหัสนักเรียนนี้แล้ว กรุณาใช้การแก้ไขข้อมูล" }, { status: 409 });
-    await ref.set({ prefix: String(body.prefix || "").slice(0,30), firstName: String(body.firstName || "").slice(0,100), lastName: String(body.lastName || "").slice(0,100), status: "active", currentEnrollment: enrollment, profileStatus: "not_started", profileCompletion: 0, createdAt: new Date().toISOString(), createdBy: admin.uid });
-    await db.collection("studentEnrollments").doc(enrollment.academicYear + "_" + studentId).set({ studentId, ...enrollment });
-    return NextResponse.json({ ok: true });
-  } catch (e) { const x = staffError(e); return NextResponse.json({ error: x.message }, { status: x.status }); }
+    const enrollRef = db.collection("studentEnrollments").doc(enrollment.academicYear + "_" + studentId);
+    await db.runTransaction(async tx => {
+      const [systemSnap, existing, enrollmentSnap] = await Promise.all([
+        tx.get(db.collection("settings").doc("system")), tx.get(ref), tx.get(enrollRef)
+      ]);
+      if (systemSnap.data()?.rolloverLock ||
+          String(systemSnap.data()?.currentAcademicYear || settings.currentAcademicYear) !== enrollment.academicYear)
+        throw new Error("ACADEMIC_YEAR_CHANGED");
+      if (existing.exists || enrollmentSnap.exists) throw new Error("STUDENT_ALREADY_EXISTS");
+      const now = new Date().toISOString();
+      tx.create(ref, {
+        prefix: String(body.prefix || "").trim().slice(0,30),
+        firstName, lastName, status: "active", currentEnrollment: enrollment,
+        profileStatus: "not_started", profileCompletion: 0,
+        createdAt: now, createdBy: admin.uid
+      });
+      tx.create(enrollRef, { studentId, ...enrollment, createdAt: now });
+    });
+    await db.collection("auditLogs").add({actorUid: admin.uid, action:"create_student", targetId:studentId, createdAt:new Date().toISOString()}).catch(()=>{});
+    return NextResponse.json({ok:true,studentId});
+  } catch (e) {
+    if (e.message === "ACADEMIC_YEAR_CHANGED") return NextResponse.json({ error: "ปีการศึกษามีการเปลี่ยนแปลง" }, { status: 409 });
+    if (e.message === "STUDENT_ALREADY_EXISTS") return NextResponse.json({ error: "มีรหัสนักเรียนหรือทะเบียนปีนี้อยู่แล้ว" }, { status: 409 });
+    const x = staffError(e);
+    return NextResponse.json({error:x.message}, {status:x.status});
+  }
 }

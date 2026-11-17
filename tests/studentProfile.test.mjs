@@ -40,3 +40,16 @@ test("nested merges preserve unrelated fields", () => {
   assert.equal(merged.address.registered.province,"ขอนแก่น");
   assert.equal(merged.address.travelMethod,"เดิน");
 });
+
+test("invalid class numbers and statuses cannot be written by Admin", () => {
+  assert.throws(()=>sanitizeStaffStudentPatch({currentEnrollment:{academicYear:"2569",grade:"2",room:"1",number:"abc"}},true),/INVALID_ENROLLMENT/);
+  assert.throws(()=>sanitizeStaffStudentPatch({currentEnrollment:{academicYear:"2569",grade:"2",room:"1",number:-1}},true),/INVALID_ENROLLMENT/);
+  assert.throws(()=>sanitizeStaffStudentPatch({currentEnrollment:{academicYear:"2569",grade:"2",room:"1",number:1001}},true),/INVALID_ENROLLMENT/);
+  assert.throws(()=>sanitizeStaffStudentPatch({currentEnrollment:null},true),/INVALID_ENROLLMENT/);
+  assert.throws(()=>sanitizeStaffStudentPatch({status:"admin"},true),/INVALID_STATUS/);
+});
+
+test("valid current enrollment preserves blank number as null", () => {
+  const result=sanitizeStaffStudentPatch({currentEnrollment:{academicYear:"2569",grade:"2",room:"1",number:""}},true);
+  assert.equal(result.currentEnrollment.number,null);
+});
