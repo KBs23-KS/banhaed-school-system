@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { FieldValue } from "firebase-admin/firestore";
 import { getAdminDb } from "@/lib/firebaseAdmin";
 import { COOKIE_NAME, createStudentSession, hashDobPassword, normalizeStudentId, verifyDobPassword } from "@/lib/studentAuth";
 import { checkLoginLimit, clearLoginFailures, isStrongStudentPassword, markLoginFailure, verifyRequestOrigin } from "@/lib/studentSecurity";
@@ -28,7 +29,7 @@ export async function POST(request) {
     await db.runTransaction(async tx => {
       const current = await tx.get(ref);
       if (!current.exists || current.data().auth?.activated || current.data().auth?.activation?.hash !== codeInfo.hash) throw new Error("ALREADY_ACTIVATED");
-      tx.set(ref, { auth: { activated: true, passwordHash: hashed.hash, passwordSalt: hashed.salt, passwordVersion: "custom", sessionVersion: version, activatedAt: new Date().toISOString() }, profileStatus: "incomplete", updatedAt: new Date().toISOString() }, { merge: true });
+      tx.update(ref, { "auth.activated": true, "auth.passwordHash": hashed.hash, "auth.passwordSalt": hashed.salt, "auth.passwordVersion": "custom", "auth.sessionVersion": version, "auth.activatedAt": new Date().toISOString(), "auth.activation": FieldValue.delete(), profileStatus: "incomplete", updatedAt: new Date().toISOString() });
     });
     await clearLoginFailures(studentId, "activate");
     const res = NextResponse.json({ ok: true });

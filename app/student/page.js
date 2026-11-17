@@ -95,7 +95,7 @@ function SelectField({label,value,onChange,options=[]}){return <label className=
 function TextAreaField({label,value,onChange,placeholder=""}){return <label className="modern-field wide"><span>{label}</span><textarea rows={4} value={value||""} placeholder={placeholder} onChange={e=>onChange(e.target.value)}/></label>}
 function groupDone(key,s){
   if(key==="personal")return !!(s.citizenId&&s.nickname&&s.birthDateBE&&s.gender&&(s.phone||s.noPhone));
-  if(key==="address")return !!(s.address?.registered?.houseNo&&s.address?.registered?.district&&s.address?.registered?.province&&s.address?.travelMethod);
+  if(key==="address")return !!(s.address?.registered?.houseNo&&s.address?.registered?.subdistrict&&s.address?.registered?.district&&s.address?.registered?.province&&s.address?.travelMethod);
   if(key==="family")return !!(s.family?.guardian?.name&&s.family?.guardian?.phone);
   if(key==="emergency")return !!(s.emergency?.primary?.name&&s.emergency?.primary?.phone);
   if(key==="additional")return !!s.additional?.abilities;

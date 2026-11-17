@@ -26,11 +26,12 @@ export async function POST(request) {
     const admin=await requireStaff(request,["admin"]),body=await request.json();
     const username=String(body.username||"").trim().toLowerCase();
     if (!/^[a-z0-9_-]{3,32}$/.test(username) || typeof body.password!=="string" || body.password.length<10) return NextResponse.json({error:"Username ต้องมี 3–32 ตัวอักษร และรหัสผ่านอย่างน้อย 10 ตัว"},{status:400});
+    const roles=validatedRoles(body.roles||["teacher"]),homerooms=validatedRooms(body.homerooms||[]);
     const email=username+"@banhaed.local",auth=getAdminAuth();
     let user;
     try {user=await auth.createUser({email,password:body.password,displayName:String(body.displayName||username).slice(0,100)});}
     catch(e){if(e.code==="auth/email-already-exists")return NextResponse.json({error:"มี Username นี้อยู่แล้ว"},{status:409});throw e;}
-    await getAdminDb().collection("users").doc(user.uid).set({username,email,displayName:String(body.displayName||username).slice(0,100),roles:validatedRoles(body.roles||["teacher"]),homerooms:validatedRooms(body.homerooms||[]),status:"active",createdAt:new Date().toISOString(),createdBy:admin.uid});
+    await getAdminDb().collection("users").doc(user.uid).set({username,email,displayName:String(body.displayName||username).slice(0,100),roles,homerooms,status:"active",createdAt:new Date().toISOString(),createdBy:admin.uid});
     await getAdminDb().collection("auditLogs").add({actorUid:admin.uid,action:"create_staff_account",targetId:user.uid,createdAt:new Date().toISOString()});
     return NextResponse.json({ok:true,uid:user.uid});
   }catch(e){if(e.message==="INVALID")return NextResponse.json({error:"สิทธิ์หรือห้องเรียนไม่ถูกต้อง"},{status:400});const x=staffError(e);return NextResponse.json({error:x.message},{status:x.status});}

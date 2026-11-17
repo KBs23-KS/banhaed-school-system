@@ -7,8 +7,8 @@ import SecureImage from "@/components/SecureImage";
 
 export default function StudentsPage(){
   const [rows,setRows]=useState([]),[page,setPage]=useState(1),[pages,setPages]=useState(1),[totalRecords,setTotalRecords]=useState(0),[q,setQ]=useState(""),[grade,setGrade]=useState(""),[room,setRoom]=useState(""),[status,setStatus]=useState(""),[loading,setLoading]=useState(true);
-  async function load(targetPage=1){setLoading(true);try{const d=await staffFetch(`/api/students?q=${encodeURIComponent(q)}&grade=${grade}&room=${room}&status=${status}&page=${targetPage}`);setRows(d.students||[]);setPage(d.page||1);setPages(d.pages||1);setTotalRecords(d.total||0)}catch(e){setRows([])}finally{setLoading(false)}}
-  useEffect(()=>{load()},[]);
+  async function load(targetPage=1,queryOverride=null){setLoading(true);try{const effectiveQuery=queryOverride===null?q:queryOverride;const d=await staffFetch(`/api/students?q=${encodeURIComponent(effectiveQuery)}&grade=${grade}&room=${room}&status=${status}&page=${targetPage}`);setRows(d.students||[]);setPage(d.page||1);setPages(d.pages||1);setTotalRecords(d.total||0)}catch(e){setRows([])}finally{setLoading(false)}}
+  useEffect(()=>{const initial=new URLSearchParams(location.search).get("q")||"";if(initial)setQ(initial);load(1,initial)},[]);
   const total=rows.length,complete=rows.filter(x=>x.profileStatus==="complete").length;
   return <StaffShell title="นักเรียนทั้งหมด">
     <div className="page-title-row"><div><small>STUDENT DIRECTORY</small><h1>ข้อมูลนักเรียน</h1><p>ค้นหา ดูข้อมูล และติดตามความครบถ้วนของนักเรียนทั้งโรงเรียน</p></div><div className="page-title-badge"><UiIcon name="students"/>ข้อมูลนักเรียน</div></div>
