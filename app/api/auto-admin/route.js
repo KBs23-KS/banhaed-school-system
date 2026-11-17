@@ -113,10 +113,6 @@ export async function POST(request) {
       { merge: true }
     );
 
-    await db.collection("settings").doc("system").set(
-      { currentAcademicYear: "2569" },
-      { merge: true }
-    );
 
     return NextResponse.json({
       ok: true,
