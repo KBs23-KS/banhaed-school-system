@@ -95,33 +95,24 @@ function StaffLogin({onBack}){
   const [error,setError]=useState("");
   async function submit(e){
     e.preventDefault();setLoading(true);setError("");
-    try{
-      const rawUsername=username.trim().toLowerCase();
-      const normalizedUsername=rawUsername.split("@")[0];
-      let emailForLogin;
-
-      // Admin may already be saved by the browser as admin@banhaed.ac.th.
-      // Treat admin@... as the same Admin account as "admin".
-      const isAdminLogin=normalizedUsername==="admin";
-      if(isAdminLogin){
-        const bootstrap=await fetch("/api/auto-admin",{
-          method:"POST",
-          headers:{"Content-Type":"application/json"},
-          body:JSON.stringify({username:rawUsername,password})
-        });
-        const bootstrapData=await bootstrap.json().catch(()=>({}));
-        if(!bootstrap.ok) throw new Error(bootstrapData.error||"ไม่สามารถเตรียมบัญชี Admin ได้");
-        emailForLogin=bootstrapData.loginEmail||"admin@banhaed.local";
-      }else{
-        emailForLogin=rawUsername.includes("@")?rawUsername:`${normalizedUsername}@banhaed.local`;
+    try {
+      const entered=username.trim().toLowerCase();
+      const normalized=entered.split("@")[0];
+      if(!/^[a-z0-9_-]{3,32}$/.test(normalized)) throw new Error("กรุณากรอกชื่อผู้ใช้งานให้ถูกต้อง");
+      const candidateEmails=normalized==="admin"
+        ? [...new Set([entered.includes("@")?entered:"admin@banhaed.local","admin@banhaed.local","admin@banhaed.ac.th"])]
+        : [entered.includes("@")?entered:`${normalized}@banhaed.local`];
+      let signedIn=false;
+      for(const candidate of candidateEmails){
+        try{await signInWithEmailAndPassword(auth,candidate,password);signedIn=true;break;}
+        catch(error){if(candidate===candidateEmails[candidateEmails.length-1]) throw error;}
       }
-
-      await signInWithEmailAndPassword(auth,emailForLogin,password);
-      if (typeof auth.authStateReady === "function") await auth.authStateReady();
+      if(!signedIn)throw new Error("เข้าสู่ระบบไม่สำเร็จ");
+      if(typeof auth.authStateReady==="function")await auth.authStateReady();
       await auth.currentUser?.getIdToken(true);
       location.href="/staff";
     }catch(error){
-      setError(error?.message||"ชื่อผู้ใช้หรือรหัสผ่านไม่ถูกต้อง");
+      setError(error?.message==="กรุณากรอกชื่อผู้ใช้งานให้ถูกต้อง"?error.message:"ชื่อผู้ใช้หรือรหัสผ่านไม่ถูกต้อง");
       setLoading(false);
     }
   }

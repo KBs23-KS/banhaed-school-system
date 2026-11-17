@@ -1,0 +1,19 @@
+# Secrets and local environment settings
+.env
+.env.*
+!.env.local.example
+!.env.example
+
+# Dependencies and build artifacts
+node_modules/
+.next/
+.vercel/
+out/
+build/
+coverage/
+
+# OS and editor metadata
+.DS_Store
+Thumbs.db
+*.log
+*.tsbuildinfo

@@ -11,6 +11,7 @@ export default function StaffShell({ children, title = "" }) {
   const [year,setYear]=useState("—");
   const [search,setSearch]=useState("");
   const [loading, setLoading] = useState(true);
+  const [accessError,setAccessError] = useState("");
   const [open, setOpen] = useState(false);
   const pathname = usePathname();
 
@@ -31,10 +32,11 @@ export default function StaffShell({ children, title = "" }) {
         const d = await staffFetch("/api/staff/me");
         if (!cancelled) setProfile(d.user);
         staffFetch("/api/dashboard").then(d=>{if(!cancelled)setYear(d.currentAcademicYear||"—")}).catch(()=>{});
-      } catch {
+      } catch(error) {
         if (!cancelled) {
           setLoading(false);
-          location.href = "/?login=staff";
+          if(error?.status===401 || error?.message==="NO_AUTH") location.href="/?login=staff";
+          else setAccessError(error?.status===403 ? "บัญชีนี้ไม่ได้รับสิทธิ์ใช้งานระบบ" : "เชื่อมต่อระบบข้อมูลโรงเรียนไม่สำเร็จ กรุณาแจ้งผู้ดูแลตรวจสอบ Firebase Admin และ Vercel Environment Variables");
         }
         return;
       }
@@ -45,6 +47,7 @@ export default function StaffShell({ children, title = "" }) {
   }, []);
 
   if (loading) return <main className="screen-loader"><div className="loader-orb"/><p>กำลังตรวจสอบสิทธิ์ผู้ใช้งาน...</p></main>;
+  if(accessError)return <main className="screen-loader"><div className="form-error" role="alert">{accessError}</div><button className="soft-primary" onClick={()=>location.reload()}>ลองเชื่อมต่อใหม่</button><button className="soft-secondary" onClick={()=>signOut(auth).then(()=>location.href="/?login=staff")}>ออกจากระบบ</button></main>;
 
   const roles = profile?.roles || [];
   const studentNav = [
