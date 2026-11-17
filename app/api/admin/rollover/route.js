@@ -109,7 +109,7 @@ export async function POST(request) {
       fromYear,toYear,createdAt:new Date().toISOString(),
       actorUid:admin.uid,affected:originals.length,
       enrolledIds:rows.map(r=>r.studentId),
-      newStudentIds,state:"prepared",enrollmentCount:rows.length
+      newStudentIds,state:"snapshot",enrollmentCount:rows.length
     });
     // Serialize academic-year changes so two admins cannot commit concurrently.
     const systemRef=db.collection("settings").doc("system");
