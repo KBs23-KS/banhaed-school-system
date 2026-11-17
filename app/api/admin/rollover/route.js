@@ -67,35 +67,67 @@ export async function POST(request) {
     if (body.mode!=="commit") return NextResponse.json({preview,previewToken:sign({fromYear,toYear,rowsHash,issuedAt:Date.now()})});
     if (!verify(body.previewToken,{fromYear,toYear,rowsHash})) return NextResponse.json({error:"ต้องกด Preview ใหม่ก่อนยืนยันขึ้นปีการศึกษา"},{status:409});
     if (missingNonGraduates.length || newStudentMissingDetails.length) return NextResponse.json({error:"ไฟล์มีนักเรียนตกหล่นหรือข้อมูลนักเรียนใหม่ไม่ครบ กรุณาตรวจสอบก่อนขึ้นปี",missingNonGraduates,newStudentMissingDetails},{status:409});
-    const operationId=fromYear+"-"+toYear+"-"+Date.now();
-    // Back up previous enrollment/status, not sensitive profile details.
-    const backupBatchSize=350;
-    for (let i=0;i<current.docs.length;i+=backupBatchSize) {
+    const operationId=fromYear+"-"+toYear+"-"+Date.now()+"-"+crypto.randomBytes(4).toString("hex");
+    // Back up every existing record that might be changed, including inactive students.
+    const originalById=new Map(current.docs.map(doc=>[doc.id,doc]));
+    const extra=rows.filter(row=>!originalById.has(row.studentId) && !newStudentIds.includes(row.studentId));
+    for(let i=0;i<extra.length;i+=200){
+      const docs=await db.getAll(...extra.slice(i,i+200).map(row=>db.collection("students").doc(row.studentId)));
+      for(const doc of docs)if(doc.exists)originalById.set(doc.id,doc);
+    }
+    const originals=[...originalById.values()];
+    const backupRef=db.collection("rolloverBackups").doc(operationId);
+    for(let i=0;i<originals.length;i+=300){
       const batch=db.batch();
-      for (const doc of current.docs.slice(i,i+backupBatchSize)) {
-        batch.set(db.collection("rolloverBackups").doc(operationId).collection("students").doc(doc.id),{currentEnrollment:doc.data().currentEnrollment||null,status:doc.data().status||"",updatedAt:doc.data().updatedAt||null});
+      for(const doc of originals.slice(i,i+300)){
+        const data=doc.data();
+        batch.set(backupRef.collection("students").doc(doc.id),{
+          currentEnrollment:data.currentEnrollment ?? null,
+          status:data.status ?? null,
+          graduatedYear:data.graduatedYear ?? null,
+          updatedAt:data.updatedAt ?? null,
+          rolloverId:data.rolloverId ?? null
+        });
       }
       await batch.commit();
     }
-    await db.collection("rolloverBackups").doc(operationId).set({fromYear,toYear,createdAt:new Date().toISOString(),actorUid:admin.uid,affected:current.size,newStudentIds});
+    // Snapshot target-year enrollment records too, so restoration never loses pre-existing history.
+    for(let i=0;i<rows.length;i+=200){
+      const slice=rows.slice(i,i+200);
+      const refs=slice.map(r=>db.collection("studentEnrollments").doc(toYear+"_"+r.studentId));
+      const existing=await db.getAll(...refs);
+      const found=existing.filter(doc=>doc.exists);
+      if(found.length){
+        const batch=db.batch();
+        for(const doc of found)batch.set(backupRef.collection("enrollments").doc(doc.id),{data:doc.data()});
+        await batch.commit();
+      }
+    }
+    await backupRef.set({
+      fromYear,toYear,createdAt:new Date().toISOString(),
+      actorUid:admin.uid,affected:originals.length,
+      enrolledIds:rows.map(r=>r.studentId),
+      newStudentIds,state:"prepared",enrollmentCount:rows.length
+    });
     const brandNew=new Set(newStudentIds);
     for (let i=0;i<rows.length;i+=200) {
       const batch=db.batch();
       for (const r of rows.slice(i,i+200)) {
         const enrollment={academicYear:toYear,grade:r.grade,room:r.room,number:r.number};
-        const record={currentEnrollment:enrollment,status:"active",updatedAt:new Date().toISOString()};
+        const record={currentEnrollment:enrollment,status:"active",rolloverId:operationId,updatedAt:new Date().toISOString()};
         if(brandNew.has(r.studentId))Object.assign(record,{prefix:r.prefix,firstName:r.firstName,lastName:r.lastName,profileStatus:"not_started",profileCompletion:0,createdAt:new Date().toISOString()});
         batch.set(db.collection("students").doc(r.studentId),record,{merge:true});
-        batch.set(db.collection("studentEnrollments").doc(toYear+"_"+r.studentId),{studentId:r.studentId,...enrollment},{merge:true});
+        batch.set(db.collection("studentEnrollments").doc(toYear+"_"+r.studentId),{studentId:r.studentId,...enrollment,rolloverId:operationId},{merge:true});
       }
       await batch.commit();
     }
     for (let i=0;i<graduates.length;i+=400) {
       const batch=db.batch();
-      for (const id of graduates.slice(i,i+400)) batch.set(db.collection("students").doc(id),{status:"graduated",graduatedYear:fromYear},{merge:true});
+      for (const id of graduates.slice(i,i+400)) batch.set(db.collection("students").doc(id),{status:"graduated",graduatedYear:fromYear,rolloverId:operationId},{merge:true});
       await batch.commit();
     }
     await db.collection("settings").doc("system").set({currentAcademicYear:toYear},{merge:true});
+    await backupRef.update({state:"committed",committedAt:new Date().toISOString()});
     await db.collection("auditLogs").add({actorUid:admin.uid,action:"academic_year_rollover",fromYear,toYear,backupId:operationId,createdAt:new Date().toISOString()});
     return NextResponse.json({ok:true,preview,backupId:operationId});
   } catch(e) {
