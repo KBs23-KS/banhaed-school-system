@@ -40,7 +40,7 @@
    `NEXT_PUBLIC_FIREBASE_PROJECT_ID`, `NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID`,
    `NEXT_PUBLIC_FIREBASE_APP_ID` จาก Firebase Web App ของ test project
 5. ตั้ง `NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET` ตามที่ใช้จริงถ้าจำเป็น
-6. **Fail-closed:** Server API บน Vercel Preview จะไม่เข้าถึง Firestore Production และจะไม่ทำงานถ้ายังไม่ได้กำหนด Firebase test project สำหรับทั้ง Browser และ Server
+6. **Fail-closed:** Server API และหน้า Login บน Vercel Preview จะไม่เข้าถึง Firebase Production และจะไม่ทำงานถ้ายังไม่ได้กำหนด Firebase test project สำหรับทั้ง Browser และ Server (Vercel ตั้งค่า `NEXT_PUBLIC_SCHOOL_PREVIEW_LOCK=true` สำหรับ Preview แล้ว)
 
 ## Google Drive
 1. เปิด Google Drive API ใน Google Cloud project ที่ถูกต้อง

@@ -17,7 +17,7 @@ function validatedRooms(homerooms) {
   });
 }
 export async function GET(request) {
-  try {await requireStaff(request,["admin"]);const snap=await getAdminDb().collection("users").get();return NextResponse.json({users:snap.docs.map(d=>({uid:d.id,...d.data()}))});}
+  try {await requireStaff(request,["admin"]);const snap=await getAdminDb().collection("users").get();return NextResponse.json({users:snap.docs.map(d=>{const x=d.data();return {uid:d.id,username:x.username,email:x.email,displayName:x.displayName,roles:x.roles||[],homerooms:x.homerooms||[],status:x.status||"active",createdAt:x.createdAt};})});}
   catch(e){const x=staffError(e);return NextResponse.json({error:x.message},{status:x.status});}
 }
 export async function POST(request) {
@@ -31,8 +31,9 @@ export async function POST(request) {
     let user;
     try {user=await auth.createUser({email,password:body.password,displayName:String(body.displayName||username).slice(0,100)});}
     catch(e){if(e.code==="auth/email-already-exists")return NextResponse.json({error:"มี Username นี้อยู่แล้ว"},{status:409});throw e;}
-    await getAdminDb().collection("users").doc(user.uid).set({username,email,displayName:String(body.displayName||username).slice(0,100),roles,homerooms,status:"active",createdAt:new Date().toISOString(),createdBy:admin.uid});
-    await getAdminDb().collection("auditLogs").add({actorUid:admin.uid,action:"create_staff_account",targetId:user.uid,createdAt:new Date().toISOString()});
+    try {await getAdminDb().collection("users").doc(user.uid).set({username,email,displayName:String(body.displayName||username).slice(0,100),roles,homerooms,status:"active",createdAt:new Date().toISOString(),createdBy:admin.uid});}
+    catch(error){await auth.deleteUser(user.uid).catch(()=>{});throw error;}
+    await getAdminDb().collection("auditLogs").add({actorUid:admin.uid,action:"create_staff_account",targetId:user.uid,createdAt:new Date().toISOString()}).catch(()=>{});
     return NextResponse.json({ok:true,uid:user.uid});
   }catch(e){if(e.message==="INVALID")return NextResponse.json({error:"สิทธิ์หรือห้องเรียนไม่ถูกต้อง"},{status:400});const x=staffError(e);return NextResponse.json({error:x.message},{status:x.status});}
 }
@@ -54,7 +55,7 @@ export async function PATCH(request) {
     }
     if(old.username==="admin" && patch.status==="inactive")return NextResponse.json({error:"ปิดบัญชี Admin หลักไม่ได้"},{status:400});
     if(body.password!==undefined){
-      if(old.username==="admin")return NextResponse.json({error:"เปลี่ยนรหัส Admin หลักผ่าน Environment Variable เท่านั้น"},{status:400});
+      if(old.username==="admin")return NextResponse.json({error:"เปลี่ยนรหัส Admin หลักผ่าน Firebase Authentication Console"},{status:400});
       if(typeof body.password!=="string" || body.password.length<10)return NextResponse.json({error:"รหัสผ่านอย่างน้อย 10 ตัวอักษร"},{status:400});
       await getAdminAuth().updateUser(uid,{password:body.password});
     }

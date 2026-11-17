@@ -17,3 +17,7 @@ test("preview requires matching isolated client project",()=>{
  assert.throws(()=>validateFirebaseTarget({...common,FIREBASE_PROJECT_ID:"school-test",VERCEL_ENV:"preview",NEXT_PUBLIC_FIREBASE_PROJECT_ID:"different"}),/mismatch/);
  assert.equal(validateFirebaseTarget({...common,FIREBASE_PROJECT_ID:"school-test",VERCEL_ENV:"preview",NEXT_PUBLIC_FIREBASE_PROJECT_ID:"school-test"}),"school-test");
 });
+
+test("explicit preview lock rejects production even if VERCEL_ENV is unavailable",()=>{
+ assert.throws(()=>validateFirebaseTarget({...common,FIREBASE_PROJECT_ID:PRODUCTION_FIREBASE_PROJECT_ID,NEXT_PUBLIC_SCHOOL_PREVIEW_LOCK:"true"}),/Preview cannot/);
+});
