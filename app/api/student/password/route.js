@@ -10,6 +10,7 @@ export async function POST(request) {
     if (!session) return NextResponse.json({ error: "unauthorized" }, { status: 401 });
     await checkLoginLimit(session.studentId, "changePassword");
     const { currentPassword, newPassword } = await request.json();
+    if (typeof currentPassword !== "string" || currentPassword.length < 1 || currentPassword.length > 128) return NextResponse.json({error:"รหัสผ่านเดิมไม่ถูกต้อง"},{status:400});
     if (!isStrongStudentPassword(newPassword)) return NextResponse.json({ error: "รหัสผ่านใหม่ต้องมีอย่างน้อย 10 ตัวอักษร มีตัวอักษรและตัวเลข" }, { status: 400 });
     const auth = session.data.auth;
     const current = auth.passwordVersion === "custom" ? String(currentPassword || "") : normalizeDobPassword(currentPassword);

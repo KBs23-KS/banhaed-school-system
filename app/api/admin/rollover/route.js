@@ -15,7 +15,7 @@ function normalizeRows(rows) {
     const number = Number(r.number || r["เลขที่"] || 0);
     if (!/^[0-9A-Za-z-]{1,32}$/.test(studentId) || !/^[1-6]$/.test(grade) || !/^[0-9]{1,3}$/.test(room) || !Number.isInteger(number) || number < 0 || number > 1000 || seen.has(studentId)) throw new Error("INVALID_ROWS");
     seen.add(studentId);
-    return { studentId, grade, room, number };
+    return { studentId, grade, room, number, prefix:String(r.prefix||r["คำนำหน้า"]||"").slice(0,30), firstName:String(r.firstName||r["ชื่อ"]||"").trim().slice(0,100), lastName:String(r.lastName||r["นามสกุล"]||"").trim().slice(0,100) };
   });
 }
 function signingSecret() {
@@ -52,11 +52,21 @@ export async function POST(request) {
     const missing=current.docs.filter(d=>!foundIds.has(d.id)).map(d=>({studentId:d.id,grade:String(d.data().currentEnrollment?.grade||"")}));
     const missingNonGraduates=missing.filter(x=>x.grade!=="6").map(x=>x.studentId);
     const graduates=missing.filter(x=>x.grade==="6").map(x=>x.studentId);
-    const preview={fromYear,toYear,current:current.size,found:rows.length,missing:missing.map(x=>x.studentId),missingNonGraduates,graduates};
+    const currentIds=new Set(current.docs.map(d=>d.id));
+    const newOrInactive=rows.filter(r=>!currentIds.has(r.studentId));
+    const unknown=[];
+    for (let i=0;i<newOrInactive.length;i+=200) {
+      const batch=newOrInactive.slice(i,i+200);
+      const documents=await db.getAll(...batch.map(r=>db.collection("students").doc(r.studentId)));
+      for (let j=0;j<documents.length;j++) if(!documents[j].exists)unknown.push(batch[j]);
+    }
+    const newStudentIds=unknown.map(r=>r.studentId);
+    const newStudentMissingDetails=unknown.filter(r=>!r.firstName||!r.lastName).map(r=>r.studentId);
+    const preview={fromYear,toYear,current:current.size,found:rows.length,missing:missing.map(x=>x.studentId),missingNonGraduates,graduates,newStudentIds,newStudentMissingDetails};
     const rowsHash=crypto.createHash("sha256").update(JSON.stringify(rows)).digest("hex");
     if (body.mode!=="commit") return NextResponse.json({preview,previewToken:sign({fromYear,toYear,rowsHash,issuedAt:Date.now()})});
     if (!verify(body.previewToken,{fromYear,toYear,rowsHash})) return NextResponse.json({error:"ต้องกด Preview ใหม่ก่อนยืนยันขึ้นปีการศึกษา"},{status:409});
-    if (missingNonGraduates.length) return NextResponse.json({error:"ยังมีนักเรียนที่ไม่ใช่ ม.6 ตกหล่นจากไฟล์ กรุณาตรวจสอบก่อนขึ้นปี",missingNonGraduates},{status:409});
+    if (missingNonGraduates.length || newStudentMissingDetails.length) return NextResponse.json({error:"ไฟล์มีนักเรียนตกหล่นหรือข้อมูลนักเรียนใหม่ไม่ครบ กรุณาตรวจสอบก่อนขึ้นปี",missingNonGraduates,newStudentMissingDetails},{status:409});
     const operationId=fromYear+"-"+toYear+"-"+Date.now();
     // Back up previous enrollment/status, not sensitive profile details.
     const backupBatchSize=350;
@@ -67,12 +77,15 @@ export async function POST(request) {
       }
       await batch.commit();
     }
-    await db.collection("rolloverBackups").doc(operationId).set({fromYear,toYear,createdAt:new Date().toISOString(),actorUid:admin.uid,affected:current.size});
+    await db.collection("rolloverBackups").doc(operationId).set({fromYear,toYear,createdAt:new Date().toISOString(),actorUid:admin.uid,affected:current.size,newStudentIds});
+    const brandNew=new Set(newStudentIds);
     for (let i=0;i<rows.length;i+=200) {
       const batch=db.batch();
       for (const r of rows.slice(i,i+200)) {
         const enrollment={academicYear:toYear,grade:r.grade,room:r.room,number:r.number};
-        batch.set(db.collection("students").doc(r.studentId),{currentEnrollment:enrollment,status:"active",updatedAt:new Date().toISOString()},{merge:true});
+        const record={currentEnrollment:enrollment,status:"active",updatedAt:new Date().toISOString()};
+        if(brandNew.has(r.studentId))Object.assign(record,{prefix:r.prefix,firstName:r.firstName,lastName:r.lastName,profileStatus:"not_started",profileCompletion:0,createdAt:new Date().toISOString()});
+        batch.set(db.collection("students").doc(r.studentId),record,{merge:true});
         batch.set(db.collection("studentEnrollments").doc(toYear+"_"+r.studentId),{studentId:r.studentId,...enrollment},{merge:true});
       }
       await batch.commit();

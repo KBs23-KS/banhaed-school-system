@@ -9,6 +9,7 @@ export async function POST(request) {
     const b = await request.json();
     const studentId = normalizeStudentId(b.studentId);
     const password = String(b.password ?? b.dob ?? "");
+    if (password.length < 1 || password.length > 128) return NextResponse.json({error:"รหัสนักเรียนหรือรหัสผ่านไม่ถูกต้อง"},{status:401});
     if (!/^[0-9A-Za-z-]{1,32}$/.test(studentId)) return NextResponse.json({ error: "เข้าสู่ระบบไม่สำเร็จ" }, { status: 401 });
     await checkLoginLimit(studentId, "login");
     const snap = await getAdminDb().collection("students").doc(studentId).get();

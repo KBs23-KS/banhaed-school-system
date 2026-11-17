@@ -36,7 +36,7 @@ export async function POST(request) {
       for (let k=0; k<group.length; k++) {
         const s = group[k], old = existing[k].data();
         const enrollment = {academicYear:year,grade:s.grade,room:s.room,number:s.number};
-        const data = {prefix:s.prefix,firstName:s.firstName,lastName:s.lastName,currentEnrollment:enrollment,updatedAt:new Date().toISOString()};
+        const data = {prefix:s.prefix,firstName:s.firstName,lastName:s.lastName,currentEnrollment:enrollment,status:"active",updatedAt:new Date().toISOString()};
         if (!old) { data.status="active";data.profileStatus="not_started";data.profileCompletion=0;data.createdAt=new Date().toISOString(); }
         batch.set(refs[k],data,{merge:true});
         batch.set(db.collection("studentEnrollments").doc(year+"_"+s.studentId),{studentId:s.studentId,...enrollment},{merge:true});
