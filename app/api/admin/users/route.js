@@ -17,7 +17,7 @@ function validatedRooms(homerooms) {
   });
 }
 export async function GET(request) {
-  try {await requireStaff(request,["admin"]);const snap=await getAdminDb().collection("users").get();return NextResponse.json({users:snap.docs.map(d=>{const x=d.data();return {uid:d.id,username:x.username,email:x.email,displayName:x.displayName,roles:x.roles||[],homerooms:x.homerooms||[],status:x.status||"active",createdAt:x.createdAt};})});}
+  try {await requireStaff(request,["admin"]);const snap=await getAdminDb().collection("users").get();return NextResponse.json({users:snap.docs.map(d=>{const x=d.data();return {uid:d.id,username:x.username,email:x.email,displayName:x.displayName,roles:x.roles||[],homerooms:x.homerooms||[],status:x.status||"active",createdAt:x.createdAt};})},{headers:{"Cache-Control":"private, no-store"}});}
   catch(e){const x=staffError(e);return NextResponse.json({error:x.message},{status:x.status});}
 }
 export async function POST(request) {
